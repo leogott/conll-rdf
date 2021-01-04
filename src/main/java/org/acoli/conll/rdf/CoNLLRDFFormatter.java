@@ -617,9 +617,6 @@ public class CoNLLRDFFormatter extends CoNLLRDFComponent {
 
 			CoNLLRDFFormatter f = new CoNLLRDFFormatter();
 
-			f.setInputStream(new BufferedReader(new InputStreamReader(System.in)));
-			f.setOutputStream(System.out);
-
 			boolean CONLLRDF = args.contains("-rdf");
 			boolean CONLL = args.contains("-conll");
 			boolean DEBUG = args.contains("-debug");

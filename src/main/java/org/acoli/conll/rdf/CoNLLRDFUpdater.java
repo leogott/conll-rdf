@@ -1206,9 +1206,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			updater.parseUpdates(updates);
 
 			long start = System.currentTimeMillis();
-
-			updater.setInputStream(new BufferedReader(new InputStreamReader(System.in)));
-			updater.setOutputStream(System.out);
+			
 			//READ SENTENCES from System.in
 			updater.processSentenceStream();
 			LOG.debug((System.currentTimeMillis()-start)/1000 + " seconds");
