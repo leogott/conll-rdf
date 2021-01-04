@@ -49,6 +49,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryParseException;
@@ -73,27 +75,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	static final int MAXITERATE = 999; // maximum update iterations allowed until the update loop is cancelled and an error message is thrown - to prevent faulty update scripts running in an endless loop
 	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class.getName());
 	private static final String DEFAULTUPDATENAME = "DIRECTUPDATE";
-
-	public static class Pair<F, S> {
-		public F key;
-		public S value;
-		public Pair (F key, S value) {
-			this.key = key;
-			this.value = value;
-		}
-		public F getKey() {
-			return key;
-		}
-		public void setKey(F key) {
-			this.key = key;
-		}
-		public S getValue() {
-			return value;
-		}
-		public void setValue(S value) {
-			this.value = value;
-		}
-	}
 
 	public static class Triple<F, S, M> {
 		public F first;
@@ -156,7 +137,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 						dRTs.get(threadID).addAll(ret);
 					else
 						for (int x = 0; x < ret.size(); ++x)
-							dRTs.get(threadID).set(x, new Pair<Integer, Long>(
+							dRTs.get(threadID).set(x, new ImmutablePair<Integer, Long>(
 									dRTs.get(threadID).get(x).getKey() + ret.get(x).getKey(),
 									dRTs.get(threadID).get(x).getValue() + ret.get(x).getValue()));
 
@@ -391,7 +372,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				}
 				if (v == MAXITERATE)
 					LOG.warn("Warning: MAXITERATE reached for " + update.first + ".");
-				result.add(new Pair<Integer, Long>(v, System.currentTimeMillis() - startTime));
+				result.add(new ImmutablePair<Integer, Long>(v, System.currentTimeMillis() - startTime));
 				defaultModel.unregister(cL);
 				upd_id++;
 			}
@@ -838,8 +819,8 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		}
 		catch (UnsupportedEncodingException e)
 		{
-		    LOG.error(message + " - Encoding error: " + e.getMessage());
-		    System.exit(-1);
+			LOG.error(message + " - Encoding error: " + e.getMessage());
+			System.exit(-1);
 		}
 	}
 
@@ -922,7 +903,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		//add final sentence (with prefixes if necessary)
 		//work down remaining buffer
 		if (!buffer.contains("@prefix"))  {
-		    buffer = prefixCache+buffer;
+			buffer = prefixCache+buffer;
 		}
 		sentBufferLookahead.add(buffer);
 		while (sentBufferLookahead.size()>0) {
@@ -963,7 +944,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				dRTs_sum.addAll(dRT_thread);
 			else
 				for (int x = 0; x < dRT_thread.size(); ++x)
-					dRTs_sum.set(x, new Pair<Integer, Long>(
+					dRTs_sum.set(x, new ImmutablePair<Integer, Long>(
 							dRTs_sum.get(x).getKey() + dRT_thread.get(x).getKey(),
 							dRTs_sum.get(x).getValue() + dRT_thread.get(x).getValue()));
 		}
