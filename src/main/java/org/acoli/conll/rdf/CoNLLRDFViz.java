@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
  * @author Christian Chiarcos {@literal chiarcos@informatik.uni-frankfurt.de}
  */
 public class CoNLLRDFViz {
-	private static final Logger LOG = Logger.getLogger(CoNLLRDFViz.class.getName());
+	private static final Logger LOG = Logger.getLogger(CoNLLRDFViz.class);
 
 	protected static String dotId(Resource r) {
 		if (r.isAnon())

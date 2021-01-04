@@ -38,7 +38,7 @@ import org.apache.jena.query.*;
  * @author Christian Faeth {@literal faeth@em.uni-frankfurt.de}
  */
 public class CoNLLStreamExtractor extends CoNLLRDFComponent {
-	private static Logger LOG = Logger.getLogger(CoNLLStreamExtractor.class.getName());
+	private static Logger LOG = Logger.getLogger(CoNLLStreamExtractor.class);
 
 	private String baseURI;
 

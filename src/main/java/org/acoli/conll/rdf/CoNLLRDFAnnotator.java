@@ -33,7 +33,7 @@ import org.apache.jena.query.*;
  */
 public class CoNLLRDFAnnotator extends CoNLLRDFFormatter {
 	
-		private static Logger LOG = Logger.getLogger(CoNLLRDFAnnotator.class.getName());
+		private static Logger LOG = Logger.getLogger(CoNLLRDFAnnotator.class);
 
 		public static void main(String[] argv) throws IOException {
 			LOG.info("synopsis: CoNLLRDFAnnotator file.ttl \n"

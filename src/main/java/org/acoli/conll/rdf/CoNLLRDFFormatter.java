@@ -33,7 +33,7 @@ import org.apache.jena.query.*;
  */
 public class CoNLLRDFFormatter extends CoNLLRDFComponent {
 
-	protected static Logger LOG = Logger.getLogger(CoNLLRDFFormatter.class.getName());
+	protected static Logger LOG = Logger.getLogger(CoNLLRDFFormatter.class);
 
 	public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BRIGHTER = "\u001B[1m";
@@ -149,7 +149,7 @@ public class CoNLLRDFFormatter extends CoNLLRDFComponent {
 			word = QueryExecutionFactory.create(
 					"PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>\n"
 							+ "SELECT ?first WHERE { ?first a nif:Word. FILTER(NOT EXISTS{ [] nif:nextWord ?first })} LIMIT 1",
-					m).execSelect().next().get("?first").toString();
+				m).execSelect().next().get("?first").toString();
 			while (true) {
 				ids.add(word.replaceAll(".*[\\\\/#:]", ""));
 				maxIdLength = Math.max(maxIdLength, ids.get(ids.size() - 1).length());

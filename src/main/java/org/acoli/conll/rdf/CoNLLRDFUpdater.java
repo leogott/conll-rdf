@@ -72,7 +72,7 @@ import org.apache.log4j.Logger;
  *  @author Christian Faeth {@literal faeth@em.uni-frankfurt.de}
  */
 public class CoNLLRDFUpdater extends CoNLLRDFComponent {
-	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class.getName());
+	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class);
 	private static final String DEFAULTUPDATENAME = "DIRECTUPDATE";
 
 	private class UpdateThread extends Thread {

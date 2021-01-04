@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
  *  */
 abstract class CoNLLBrackets2RDF extends Format2RDF {
 
-	private static Logger LOG = Logger.getLogger(Format2RDF.class.getName());
+	private static Logger LOG = Logger.getLogger(Format2RDF.class);
 	
 	/** marks columns that contain brackets, judging from the first sentence that  */
 	protected final Boolean[] col2bracket;
