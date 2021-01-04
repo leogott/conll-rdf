@@ -14,7 +14,7 @@ public class TenTen2XMLTSV {
 
 
 	List<String> tagsContainingData = Arrays.asList("kwik", "left", "right");
-	private static Logger LOG = Logger.getLogger(TenTen2XMLTSV.class.getName());
+	private static Logger LOG = Logger.getLogger(TenTen2XMLTSV.class);
 	public boolean isKEEP() {
 		return KEEP;
 	}

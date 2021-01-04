@@ -48,7 +48,7 @@ public class CoNLL2RDF extends Format2RDF{
 	}
 
 	
-	private static Logger LOG = Logger.getLogger(CoNLL2RDF.class.getName());
+	private static Logger LOG = Logger.getLogger(CoNLL2RDF.class);
 	
 	/** @param argv baseURI field1 field2 ... (see variable <code>help</code> and method <code>conll2ttl</code>) */
 	public static void main(String[] argv) throws Exception {		

@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
  **/
 abstract class Format2RDF {
 	
-	private static Logger LOG = Logger.getLogger(Format2RDF.class.getName());
+	private static Logger LOG = Logger.getLogger(Format2RDF.class);
 	
 	/** can be null */
 	protected final BufferedWriter out;
