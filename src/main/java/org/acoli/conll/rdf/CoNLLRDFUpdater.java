@@ -50,7 +50,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryParseException;
@@ -75,17 +78,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	static final int MAXITERATE = 999; // maximum update iterations allowed until the update loop is cancelled and an error message is thrown - to prevent faulty update scripts running in an endless loop
 	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class.getName());
 	private static final String DEFAULTUPDATENAME = "DIRECTUPDATE";
-
-	public static class Triple<F, S, M> {
-		public F first;
-		public S second;
-		public M third;
-		public Triple (F first, S second, M third) {
-			this.first = first;
-			this.second = second;
-			this.third = third;
-		}
-	}
 
 	private class UpdateThread extends Thread {
 
@@ -187,21 +179,21 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		 */
 		private void loadBuffer(Triple<List<String>, String, List<String>> sentBufferThread) throws Exception { //TODO: adjust for TXN-Models
 			//check validity of current sentence
-			isValidUTF8(sentBufferThread.second, "Input data encoding issue for \"" + sentBufferThread.second + "\"");
+			isValidUTF8(sentBufferThread.getMiddle(), "Input data encoding issue for \"" + sentBufferThread.getMiddle() + "\"");
 			//load ALL
 			try {
 //				memDataset.begin(ReadWrite.WRITE);
 
 				// for lookback
-				for (String sent:sentBufferThread.first) {
+				for (String sent:sentBufferThread.getLeft()) {
 					memDataset.getNamedModel("https://github.com/acoli-repo/conll-rdf/lookback").read(new StringReader(sent),null, "TTL");
 				}
 
 				// for current sentence
-				memDataset.getDefaultModel().read(new StringReader(sentBufferThread.second),null, "TTL");
+				memDataset.getDefaultModel().read(new StringReader(sentBufferThread.getMiddle()),null, "TTL");
 
 				// for lookahead
-				for (String sent:sentBufferThread.third) {
+				for (String sent:sentBufferThread.getRight()) {
 					memDataset.getNamedModel("https://github.com/acoli-repo/conll-rdf/lookahead").read(new StringReader(sent),null, "TTL");
 				}
 
@@ -210,7 +202,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 //				memAccessor.add(m);
 //				memDataset.getDefaultModel().setNsPrefixes(m.getNsPrefixMap());
 			} catch (Exception ex) {
-				LOG.error("Exception while reading: " + sentBufferThread.second);
+				LOG.error("Exception while reading: " + sentBufferThread.getMiddle());
 				throw ex;
 			} finally {
 //				memDataset.end();
@@ -227,7 +219,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		 * @throws Exception
 		 */
 		private void unloadBuffer(Triple<List<String>, String, List<String>> sentBufferThread, Writer out) throws Exception { //TODO: adjust for TXN-Models
-			String buffer = sentBufferThread.second;
+			String buffer = sentBufferThread.getMiddle();
 			try {
 				BufferedReader in = new BufferedReader(new StringReader(buffer));
 				String line;
@@ -311,15 +303,15 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				int frq = MAXITERATE, v = 0;
 				boolean change = true;
 				try {
-					frq = Integer.parseInt(update.third);
+					frq = Integer.parseInt(update.getRight());
 				} catch (NumberFormatException e) {
-					if (!"*".equals(update.third))
+					if (!"*".equals(update.getRight()))
 						throw e;
 				}
 				while(v < frq && change) {
 					try {
 						UpdateRequest updateRequest;
-						updateRequest = UpdateFactory.create(update.second);
+						updateRequest = UpdateFactory.create(update.getMiddle());
 						if (graphsout || triplesout) { //execute Update-block step by step and output intermediate results
 							int step = 1;
 							Model dM = memDataset.getDefaultModel();
@@ -333,15 +325,15 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 								//							memDataset.end();
 								if (cLdM.hasChanged() && (!dMS.equals(memDataset.getDefaultModel().toString()))) {
 									if (graphsout) try {
-										produceDot(defaultModel, update.first, operation.toString(), sent, upd_id, iter_id, step);
+										produceDot(defaultModel, update.getLeft(), operation.toString(), sent, upd_id, iter_id, step);
 									} catch (IOException e) {
-										LOG.error("Error while producing DOT for update No. "+upd_id+": "+update.first);
+										LOG.error("Error while producing DOT for update No. "+upd_id+": "+update.getLeft());
 										e.printStackTrace();
 									}
 									if (triplesout) try {
-										produceNTRIPLES(defaultModel, update.first, operation.toString(), sent, upd_id, iter_id, step);
+										produceNTRIPLES(defaultModel, update.getLeft(), operation.toString(), sent, upd_id, iter_id, step);
 									} catch (IOException e) {
-										LOG.error("Error while producing NTRIPLES for update No. "+upd_id+": "+update.first);
+										LOG.error("Error while producing NTRIPLES for update No. "+upd_id+": "+update.getLeft());
 										e.printStackTrace();
 									}
 								}
@@ -354,7 +346,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 							//						memDataset.end();
 						}
 					} catch (Exception e) {
-						LOG.error("Error while processing update No. "+upd_id+": "+update.first);
+						LOG.error("Error while processing update No. "+upd_id+": "+update.getLeft());
 						e.printStackTrace();
 					}
 
@@ -371,7 +363,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 					iter_id++;
 				}
 				if (v == MAXITERATE)
-					LOG.warn("Warning: MAXITERATE reached for " + update.first + ".");
+					LOG.warn("Warning: MAXITERATE reached for " + update.getLeft() + ".");
 				result.add(new ImmutablePair<Integer, Long>(v, System.currentTimeMillis() - startTime));
 				defaultModel.unregister(cL);
 				upd_id++;
@@ -553,7 +545,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		for (int i = 0; i < threads; i++) {
 			updateThreads.add(null);
 			dataset.addNamedModel("http://thread"+i, ModelFactory.createDefaultModel());
-			sentBufferThreads.add(new Triple<List<String>, String, List<String>>(
+			sentBufferThreads.add(new ImmutableTriple<List<String>, String, List<String>>(
 					new ArrayList<String>(), new String(), new ArrayList<String>()));
 			dRTs.add(Collections.synchronizedList(new ArrayList<Pair<Integer,Long> >()));
 		}
@@ -696,10 +688,10 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 
 		int updateNo = 0;
 		for(Triple<String, String, String> update: updatesRaw) {
-			String updateName = update.first;
-			final String updateScriptRaw = update.second; // either an URL/ a path to, or the verbatim sparql
+			String updateName = update.getLeft();
+			final String updateScriptRaw = update.getMiddle(); // either an URL/ a path to, or the verbatim sparql
 			final String updateScript; // will eventually contain the sparql query
-			final String updateIterations = update.third;
+			final String updateIterations = update.getRight();
 			updateNo++; // Used for logging
 
 			LOG.debug("Update No."+updateNo+" named "+updateName+" with "+updateIterations+" iterations is\n"+updateScriptRaw);
@@ -775,7 +767,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				}
 				System.exit(1);
 			}
-			updatesOut.add(new Triple<String, String, String> (updateName, updateScript, updateIterations));
+			updatesOut.add(new ImmutableTriple<String, String, String> (updateName, updateScript, updateIterations));
 			LOG.debug("Update parsed ok");
 			sb.append(".");
 		}
@@ -1013,17 +1005,17 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	}
 
 	private void executeThread(String buffer) {
-		Triple<List<String>, String, List<String>>sentBufferThread =
-				new Triple<List<String>, String, List<String>>(
+		MutableTriple<List<String>, String, List<String>>sentBufferThread =
+				new MutableTriple<List<String>, String, List<String>>(
 				new ArrayList<String>(), new String(), new ArrayList<String>());
 		//sentBufferLookback only needs to be filled up to the current sentence.
 		//All other sentences are for further lookahead iterations
-//		sentBufferThread.first.addAll(sentBufferLookback);
+//		sentBufferThread.getLeft().addAll(sentBufferLookback);
 		for (int i = 0; i < sentBufferLookback.size() - sentBufferLookahead.size(); i++) {
-			sentBufferThread.first.add(sentBufferLookback.get(i));
+			sentBufferThread.getLeft().add(sentBufferLookback.get(i));
 		}
-		sentBufferThread.second = buffer;
-		sentBufferThread.third.addAll(sentBufferLookahead);
+		sentBufferThread.setMiddle(buffer);
+		sentBufferThread.getRight().addAll(sentBufferLookahead);
 		int i = 0;
 
 		while(i < updateThreads.size()) {
@@ -1241,7 +1233,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				else if (freq.equals("u"))
 					freq = "*";
 				String update = args[i++].replaceFirst("\\{[0-9u*]+\\}$", "");
-				updates.add(new Triple<String, String, String>(update, update, freq));
+				updates.add(new ImmutableTriple<String, String, String>(update, update, freq));
 			}
 			updater.parseUpdates(updates);
 
