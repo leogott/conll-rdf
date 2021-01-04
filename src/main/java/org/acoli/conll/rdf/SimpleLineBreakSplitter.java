@@ -2,12 +2,14 @@ package org.acoli.conll.rdf;
 
 import java.io.IOException;
 
+import org.apache.commons.cli.ParseException;
+
 public class SimpleLineBreakSplitter extends CoNLLRDFComponent {
 	@Override
 	protected void processSentenceStream() throws IOException {
 		String line;
 		int empty = 0;
-		while((line = getInputStream().readLine())!=null) {
+		while ((line = getInputStream().readLine()) != null) {
 			if (line.trim().isEmpty()) {
 				empty++;
 			} else {
@@ -15,10 +17,15 @@ public class SimpleLineBreakSplitter extends CoNLLRDFComponent {
 					getOutputStream().print("\n#newsegment\n");
 					empty = 0;
 				}
-				getOutputStream().print(line+"\n");
+				getOutputStream().print(line + "\n");
 			}
 		}
 		getOutputStream().close();
+	}
+
+	@Override
+	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
+		// Nothing to do
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -27,8 +34,8 @@ public class SimpleLineBreakSplitter extends CoNLLRDFComponent {
 
 		long start = System.currentTimeMillis();
 
-		//READ SENTENCES from System.in
+		// READ SENTENCES from System.in
 		splitter.processSentenceStream();
-		System.err.println(((System.currentTimeMillis()-start)/1000 + " seconds"));
+		System.err.println(((System.currentTimeMillis() - start) / 1000 + " seconds"));
 	}
 }
