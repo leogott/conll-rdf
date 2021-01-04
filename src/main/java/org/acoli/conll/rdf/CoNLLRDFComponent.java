@@ -1,34 +1,42 @@
 package org.acoli.conll.rdf;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 public abstract class CoNLLRDFComponent implements Runnable {
 
-	private BufferedReader inputStream;
-	private PrintStream outputStream;
-	
-	
+	private BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
+	private PrintStream outputStream = System.out;
 
-
-	public BufferedReader getInputStream() {
+	public final BufferedReader getInputStream() {
 		return inputStream;
 	}
-
-	public void setInputStream(BufferedReader inputStream) {
+	public final void setInputStream(BufferedReader inputStream) {
 		this.inputStream = inputStream;
 	}
-
-	public PrintStream getOutputStream() {
+	public final PrintStream getOutputStream() {
 		return outputStream;
 	}
-
-	public void setOutputStream(PrintStream outputStream) {
+	public final void setOutputStream(PrintStream outputStream) {
 		this.outputStream = outputStream;
-	
 	}
 
-	public abstract void start();
-	
-	
+	@Override
+	public final void run() {
+		try {
+			processSentenceStream();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	// TODO is this method used anywhere?
+	public final void start() {
+		run();
+	}
+
+	protected abstract void processSentenceStream() throws IOException;
 }

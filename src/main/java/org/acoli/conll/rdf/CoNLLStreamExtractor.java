@@ -1,12 +1,12 @@
 /*
  * Copyright [2017] [ACoLi Lab, Prof. Dr. Chiarcos, Goethe University Frankfurt]
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,15 +53,14 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			this.value = value;
 		}
 	}
-	
+
 	private static Logger LOG = Logger.getLogger(CoNLLStreamExtractor.class.getName());
-	
+
 	@SuppressWarnings("serial")
 	private static List<Integer> CHECKINTERVAL = new ArrayList<Integer>() {{add(3); add(10); add(25); add(50); add(100); add(200); add(500);}};
 
 	static final int MAXITERATE = 999; // maximal update iterations allowed until the update loop is canceled and an error msg is thrown - to prevent faulty update scripts running in an endless loop
-	
-	
+
 	private String baseURI;
 	public String getBaseURI() {
 		return baseURI;
@@ -95,12 +94,11 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		this.updates = updates;
 	}
 
-
-	private List<String> columns = new ArrayList<String>(); 
+	private List<String> columns = new ArrayList<String>();
 	private String select = null;
 	List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
-	
-	protected void processSentenceStream() throws Exception {
+
+	protected void processSentenceStream() throws IOException {
 		int current_sentence = 1; // keeps track of sentence id from CoNLL2RDF
 		CoNLL2RDF conll2rdf = new CoNLL2RDF(baseURI, columns.toArray(new String[columns.size()]));
 		List<Pair<Integer,Long> > dRTs = new ArrayList<Pair<Integer,Long> >(); // iterations and execution time of each update in seconds
@@ -153,7 +151,6 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			LOG.debug("Done - List of interations and execution times for the updates done (in given order):\n\t\t" + dRTs.toString());
 
 		getOutputStream().close();
-	
 	}
 
 	/**
@@ -174,7 +171,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 
 		UpdateAction.execute(s.asUpdate(), model);
 		return model;
-	} 
+	}
 	/**
 	 * Searches a BufferedReader for a global.columns = field to extract the column names from (CoNLL-U Plus feature).
 	 * We allow for arbitrary lines to search, however as of September 2019, CoNLL-U Plus only allows first line.
@@ -218,7 +215,6 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 					LOG.info("Success");
 					return fields;
 				}
-
 			}
 			inputStream.reset();
 		} catch (IOException e) {
@@ -261,9 +257,9 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		}
 		return result;
 	}
-		
+
 	/** run either SELECT statement (cf. https://jena.apache.org/documentation/query/app_api.html) and return CoNLL-like TSV or just TTL <br>
-	 *  Note: this CoNLL-like export has limitations, of course: it will export one property per column, hence, collapsed dependencies or 
+	 *  Note: this CoNLL-like export has limitations, of course: it will export one property per column, hence, collapsed dependencies or
 	 *  SRL annotations cannot be reconverted */
 	public void print(Model m, String select, Writer out) throws IOException {
 		if(select!=null) {
@@ -291,7 +287,6 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		}
 	}
 
-
 	public static void main(String[] argv) throws Exception {
 		LOG.info("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"+
 			"\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"+
@@ -301,13 +296,13 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			"\t              The SPARQL_UPDATE parameter is DEPRECATED - please use CoNLLRDFUpdater instead!\n"+
 			"\tSPARQL_SELECT SPARQL SELECT statement to produce TSV output\n"+
 			"\treads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries");
-		
+
 		String baseURI = argv[0];
 		List<String> fields = new ArrayList<String>();
 		List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
 		String select = null;
 		BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
-		
+
 		int i = 1;
 		while(i<argv.length && !argv[i].toLowerCase().matches("^-+u$"))
 			fields.add(argv[i++]);
@@ -327,7 +322,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			select=argv[i++];
 		while(i<argv.length)
 			select=select+" "+argv[i++]; // because queries may be parsed by the shell (Cygwin)
-		
+
 		if (fields.size() == 0) { // might be conllu plus, we check the first line for col names.
 			fields = findFieldsFromComments(inputStream, 1);
 		}
@@ -337,7 +332,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		LOG.info("\tCoNLL columns: "+fields);
 		LOG.info("\tSPARQL update: "+updates);
 		LOG.info("\tSPARQL select: "+select);
-		
+
 		LOG.info("read SPARQL ..");
 		//UpdateRequest request = UpdateFactory.create();
 		StringBuilder sb = new StringBuilder();
@@ -366,7 +361,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			sb.append(".");
 		}
 		sb.append(".");
-		
+
 		if(select!=null) {
 			Reader sparqlreader = new StringReader(select);
 			File f = new File(select);
@@ -374,7 +369,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			try {
 				u = new URL(select);
 			} catch (MalformedURLException e) {}
-			
+
 			if(f.exists()) {			// can be read from a file
 				sparqlreader = new FileReader(f);
 				sb.append("f");
@@ -389,10 +384,9 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			select="";
 			for(String line = in.readLine(); line!=null; line=in.readLine())
 				select=select+line+"\n";
-		}		
+		}
 		sb.append(". ok");
 		LOG.info(sb.toString());
-		
 
 		CoNLLStreamExtractor ex = new CoNLLStreamExtractor();
 		ex.setBaseURI(baseURI);
@@ -401,24 +395,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		ex.setSelect(select);
 		ex.setInputStream(inputStream);
 		ex.setOutputStream(System.out);
-		
-		ex.processSentenceStream();
-		
-	}
-	
-	
-	@Override
-	public void run() {
-		try {
-			processSentenceStream();
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
-	}
 
-	@Override
-	public void start() {
-		run();
+		ex.processSentenceStream();
 	}
 }
