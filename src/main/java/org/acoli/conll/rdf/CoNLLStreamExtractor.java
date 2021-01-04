@@ -37,11 +37,6 @@ import org.apache.jena.query.*;
 public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 	private static Logger LOG = Logger.getLogger(CoNLLStreamExtractor.class.getName());
 
-	@SuppressWarnings("serial")
-	private static List<Integer> CHECKINTERVAL = new ArrayList<Integer>() {{add(3); add(10); add(25); add(50); add(100); add(200); add(500);}};
-
-	static final int MAXITERATE = 999; // maximal update iterations allowed until the update loop is canceled and an error msg is thrown - to prevent faulty update scripts running in an endless loop
-
 	private String baseURI;
 	public String getBaseURI() {
 		return baseURI;
@@ -79,6 +74,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 	private String select = null;
 	List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
 
+	@Override
 	protected void processSentenceStream() throws IOException {
 		int current_sentence = 1; // keeps track of sentence id from CoNLL2RDF
 		CoNLL2RDF conll2rdf = new CoNLL2RDF(baseURI, columns.toArray(new String[columns.size()]));
