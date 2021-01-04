@@ -23,21 +23,25 @@ import org.apache.jena.rdf.listeners.ChangedListener;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.update.*;
 import org.apache.log4j.Logger;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.query.*;
 
-/** extracts RDF data from CoNLL files, transforms the result using SPARQL UPDATE queries,
- * 	optionally followed by SPARQL SELECT to produce TSV output<br>
- *  NOTE: queries can be provided as literal queries, file or as URLs, the latter two are preferred as
- *  a literal query string may be parsed by the JVM/shell
- *  @author Christian Chiarcos {@literal chiarcos@informatik.uni-frankfurt.de}
- *  @author Christian Faeth {@literal faeth@em.uni-frankfurt.de}
+/**
+ * extracts RDF data from CoNLL files, transforms the result using SPARQL UPDATE
+ * queries, optionally followed by SPARQL SELECT to produce TSV output<br>
+ * NOTE: queries can be provided as literal queries, file or as URLs, the latter
+ * two are preferred as a literal query string may be parsed by the JVM/shell
+ * 
+ * @author Christian Chiarcos {@literal chiarcos@informatik.uni-frankfurt.de}
+ * @author Christian Faeth {@literal faeth@em.uni-frankfurt.de}
  */
 public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 	private static Logger LOG = Logger.getLogger(CoNLLStreamExtractor.class.getName());
 
 	private String baseURI;
+
 	public String getBaseURI() {
 		return baseURI;
 	}
@@ -77,61 +81,69 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 	@Override
 	protected void processSentenceStream() throws IOException {
 		CoNLL2RDF conll2rdf = new CoNLL2RDF(baseURI, columns.toArray(new String[columns.size()]));
-		List<Pair<Integer,Long> > dRTs = new ArrayList<Pair<Integer,Long> >(); // iterations and execution time of each update in seconds
+		List<Pair<Integer, Long>> dRTs = new ArrayList<Pair<Integer, Long>>(); // iterations and execution time of each
+																				// update in seconds
 		LOG.info("process input ..");
 		BufferedReader in = getInputStream();
 		OutputStreamWriter out = new OutputStreamWriter(getOutputStream());
 		String buffer = "";
 		ArrayList<String> comments = new ArrayList<>();
-		for(String line = ""; line !=null; line=in.readLine()) {
-			if(line.contains("#")) {
+		for (String line = ""; line != null; line = in.readLine()) {
+			if (line.contains("#")) {
 				out.write(line.replaceAll("^[^#]*#", "#") + "\n");
 				comments.add(line.replaceAll("^[^#]*#", ""));
 			}
-			line=line.replaceAll("<[\\/]?[psPS]( [^>]*>|>)","").trim(); // in this way, we can also read sketch engine data and split at s and p elements
-			if(!(line.matches("^<[^>]*>$")))							// but we skip all other XML elements, as used by Sketch Engine or TreeTagger chunker
-				if(line.equals("") && !buffer.trim().equals("")) {
-					Model m = conll2rdf.conll2model(new StringReader(buffer+"\n"));
-					if(m!=null) { // null if an error occurred
-						List<Pair<Integer,Long> > ret = update(m, updates);
+			line = line.replaceAll("<[\\/]?[psPS]( [^>]*>|>)", "").trim(); // in this way, we can also read sketch
+																			// engine data and split at s and p elements
+			if (!(line.matches("^<[^>]*>$"))) // but we skip all other XML elements, as used by Sketch Engine or
+												// TreeTagger chunker
+				if (line.equals("") && !buffer.trim().equals("")) {
+					Model m = conll2rdf.conll2model(new StringReader(buffer + "\n"));
+					if (m != null) { // null if an error occurred
+						List<Pair<Integer, Long>> ret = update(m, updates);
 						if (dRTs.isEmpty())
 							dRTs = ret;
 						else
 							for (int x = 0; x < ret.size(); ++x)
-								dRTs.set(x, new ImmutablePair<Integer, Long>(dRTs.get(x).getKey() + ret.get(x).getKey(), dRTs.get(x).getValue() + ret.get(x).getValue()));
+								dRTs.set(x, new ImmutablePair<Integer, Long>(dRTs.get(x).getKey() + ret.get(x).getKey(),
+										dRTs.get(x).getValue() + ret.get(x).getValue()));
 						if (comments.size() > 0) {
 							m = injectSentenceComments(m, comments);
 							comments.clear();
 						}
-						print(m,select, out);
+						print(m, select, out);
 					}
-					buffer="";
+					buffer = "";
 				} else
-					buffer=buffer+line+"\n";
+					buffer = buffer + line + "\n";
 		}
-		if(!buffer.trim().equals("")) {
-			Model m = conll2rdf.conll2model(new StringReader(buffer+"\n"));
-			List<Pair<Integer,Long> > ret = update(m, updates);
+		if (!buffer.trim().equals("")) {
+			Model m = conll2rdf.conll2model(new StringReader(buffer + "\n"));
+			List<Pair<Integer, Long>> ret = update(m, updates);
 			if (dRTs.isEmpty())
 				dRTs = ret;
 			else
 				for (int x = 0; x < ret.size(); ++x)
-					dRTs.set(x, new ImmutablePair<Integer, Long>(dRTs.get(x).getKey() + ret.get(x).getKey(), dRTs.get(x).getValue() + ret.get(x).getValue()));
+					dRTs.set(x, new ImmutablePair<Integer, Long>(dRTs.get(x).getKey() + ret.get(x).getKey(),
+							dRTs.get(x).getValue() + ret.get(x).getValue()));
 			if (comments.size() > 0) {
 				m = injectSentenceComments(m, comments);
 				comments.clear();
 			}
-			print(m,select,out);
+			print(m, select, out);
 		}
 		if (!dRTs.isEmpty())
-			LOG.debug("Done - List of interations and execution times for the updates done (in given order):\n\t\t" + dRTs.toString());
+			LOG.debug("Done - List of interations and execution times for the updates done (in given order):\n\t\t"
+					+ dRTs.toString());
 
 		getOutputStream().close();
 	}
 
 	/**
-	 * Adds a list of conll comments to a sentence model as a rdfs:comment property separated by escaped newlines.
-	 * @param model a RDF Model representing a sentence
+	 * Adds a list of conll comments to a sentence model as a rdfs:comment property
+	 * separated by escaped newlines.
+	 * 
+	 * @param model    a RDF Model representing a sentence
 	 * @param comments a list of single line comments
 	 * @return the updated model
 	 */
@@ -140,21 +152,26 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		// alternative to ParameterizedSparqlString: UpdateQuery
 		ParameterizedSparqlString s = new ParameterizedSparqlString();
 		s.setCommandText("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-			+"PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>\n"
-			+"INSERT { ?node rdfs:comment ?comment . }"
-			+"WHERE { ?node a nif:Sentence . }");
+				+ "PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>\n"
+				+ "INSERT { ?node rdfs:comment ?comment . }" + "WHERE { ?node a nif:Sentence . }");
 		s.setLiteral("comment", String.join("\\n", comments));
 
 		UpdateAction.execute(s.asUpdate(), model);
 		return model;
 	}
+
 	/**
-	 * Searches a BufferedReader for a global.columns = field to extract the column names from (CoNLL-U Plus feature).
-	 * We allow for arbitrary lines to search, however as of September 2019, CoNLL-U Plus only allows first line.
-	 * Does NOT validate if custom columns are in a separate name space, as required by the format.
-	 * @see <a href="https://universaldependencies.org/ext-format.html">CoNLL-U Plus Format</a>
-	 * @param inputStream an untouched BufferedReader
-	 * @param maxLinesToSearch how many lines to search. CoNLL-U Plus requires this to be 1.
+	 * Searches a BufferedReader for a global.columns = field to extract the column
+	 * names from (CoNLL-U Plus feature). We allow for arbitrary lines to search,
+	 * however as of September 2019, CoNLL-U Plus only allows first line. Does NOT
+	 * validate if custom columns are in a separate name space, as required by the
+	 * format.
+	 * 
+	 * @see <a href="https://universaldependencies.org/ext-format.html">CoNLL-U Plus
+	 *      Format</a>
+	 * @param inputStream      an untouched BufferedReader
+	 * @param maxLinesToSearch how many lines to search. CoNLL-U Plus requires this
+	 *                         to be 1.
 	 */
 	static List<String> findFieldsFromComments(BufferedReader inputStream, int maxLinesToSearch) {
 		List<String> fields = new ArrayList<>();
@@ -175,7 +192,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 				meanByteSizeOfLine = ((meanByteSizeOfLine * (m - 1)) + peekedLine.length()) / m;
 				LOG.debug("Mean Byte size: " + meanByteSizeOfLine);
 				peekedChars += peekedLine.length();
-				System.err.println("Peeking line: "+peekedLine);
+				System.err.println("Peeking line: " + peekedLine);
 				if ((peekedChars + meanByteSizeOfLine) > readAheadLimit) {
 					LOG.info("Couldn't find CoNLL-U Plus columns.");
 					inputStream.reset();
@@ -183,10 +200,9 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 				}
 				LOG.debug("Testing line: " + peekedLine);
 				if (peekedLine.matches("^#\\s?global\\.columns\\s?=.*")) {
-					fields.addAll(Arrays.asList(peekedLine.trim()
-							.replaceFirst("#\\s?global\\.columns\\s?=", "")
-							.split("#")[0]
-							.trim().split(" |\t")));
+					fields.addAll(
+							Arrays.asList(peekedLine.trim().replaceFirst("#\\s?global\\.columns\\s?=", "").split("#")[0]
+									.trim().split(" |\t")));
 					inputStream.reset();
 					LOG.info("Success");
 					return fields;
@@ -199,9 +215,10 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		}
 		return fields;
 	}
-	public List<Pair<Integer,Long> > update(Model m, List<Pair<String,String>> updates) {
-		List<Pair<Integer,Long> > result = new ArrayList<Pair<Integer,Long> >();
-		for(Pair<String,String> update : updates) {
+
+	public List<Pair<Integer, Long>> update(Model m, List<Pair<String, String>> updates) {
+		List<Pair<Integer, Long>> result = new ArrayList<Pair<Integer, Long>>();
+		for (Pair<String, String> update : updates) {
 			Long startTime = System.currentTimeMillis();
 			ChangedListener cL = new ChangedListener();
 			m.register(cL);
@@ -214,7 +231,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 				if (!"*".equals(update.getValue()))
 					throw e;
 			}
-			while(v < frq && change) {
+			while (v < frq && change) {
 				UpdateAction.execute(UpdateFactory.create(update.getKey()), m);
 				if (oldModel.isEmpty())
 					change = cL.hasChanged();
@@ -234,24 +251,31 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		return result;
 	}
 
-	/** run either SELECT statement (cf. https://jena.apache.org/documentation/query/app_api.html) and return CoNLL-like TSV or just TTL <br>
-	 *  Note: this CoNLL-like export has limitations, of course: it will export one property per column, hence, collapsed dependencies or
-	 *  SRL annotations cannot be reconverted */
+	/**
+	 * run either SELECT statement (cf.
+	 * https://jena.apache.org/documentation/query/app_api.html) and return
+	 * CoNLL-like TSV or just TTL <br>
+	 * Note: this CoNLL-like export has limitations, of course: it will export one
+	 * property per column, hence, collapsed dependencies or SRL annotations cannot
+	 * be reconverted
+	 */
 	public void print(Model m, String select, Writer out) throws IOException {
-		if(select!=null) {
+		if (select != null) {
 			QueryExecution qexec = QueryExecutionFactory.create(select, m);
 			ResultSet results = qexec.execSelect();
 			List<String> cols = results.getResultVars();
-			out.write("# "); 									// well, this may be redundant, but permitted in CoNLL
-			for(String col : cols)
-				out.write(col+"\t");
+			out.write("# "); // well, this may be redundant, but permitted in CoNLL
+			for (String col : cols)
+				out.write(col + "\t");
 			out.write("\n");
 			out.flush();
-			while(results.hasNext()) {
+			while (results.hasNext()) {
 				QuerySolution sol = results.next();
-				for(String col : cols)
-					if(sol.get(col)==null) out.write("_\t");		// CoNLL practice
-					else out.write(sol.get(col)+"\t");
+				for (String col : cols)
+					if (sol.get(col) == null)
+						out.write("_\t"); // CoNLL practice
+					else
+						out.write(sol.get(col) + "\t");
 				out.write("\n");
 				out.flush();
 			}
@@ -263,113 +287,129 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		}
 	}
 
-	public static void main(String[] argv) throws Exception {
-		LOG.info("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"+
-			"\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"+
-			"\tFIELDi        CoNLL field label, cf. CoNLL2RDF\n"+
-			"\tSPARQL_UPDATE SPARQL UPDATE (DELETE/INSERT) query, either literally or its location (file/uri)\n"+
-			"\t              can be followed by an optional integer in {}-parentheses = number of repetitions\n"+
-			"\t              The SPARQL_UPDATE parameter is DEPRECATED - please use CoNLLRDFUpdater instead!\n"+
-			"\tSPARQL_SELECT SPARQL SELECT statement to produce TSV output\n"+
-			"\treads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries");
+	@Override
+	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
+		LOG.info("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"
+		+ "\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"
+		+ "\tFIELDi        CoNLL field label, cf. CoNLL2RDF\n"
+		+ "\tSPARQL_UPDATE SPARQL UPDATE (DELETE/INSERT) query, either literally or its location (file/uri)\n"
+		+ "\t              can be followed by an optional integer in {}-parentheses = number of repetitions\n"
+		+ "\t              The SPARQL_UPDATE parameter is DEPRECATED - please use CoNLLRDFUpdater instead!\n"
+		+ "\tSPARQL_SELECT SPARQL SELECT statement to produce TSV output\n"
+		+ "\treads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries");
 
-		String baseURI = argv[0];
+		String baseURI = args[0];
 		List<String> fields = new ArrayList<String>();
 		List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
 		String select = null;
 		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
 
 		int i = 1;
-		while(i<argv.length && !argv[i].toLowerCase().matches("^-+u$"))
-			fields.add(argv[i++]);
-		while(i<argv.length && argv[i].toLowerCase().matches("^-+u$")) i++;
-		while(i<argv.length && !argv[i].toLowerCase().matches("^-+s$")) {
+		while (i < args.length && !args[i].toLowerCase().matches("^-+u$"))
+			fields.add(args[i++]);
+		while (i < args.length && args[i].toLowerCase().matches("^-+u$"))
+			i++;
+		while (i < args.length && !args[i].toLowerCase().matches("^-+s$")) {
 			String freq;
-			freq = argv[i].replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
-			if (argv[i].equals(freq))
+			freq = args[i].replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
+			if (args[i].equals(freq))
 				freq = "1";
 			else if (freq.equals("u"))
 				freq = "*";
-			String update =argv[i++].replaceFirst("\\{[0-9*]+\\}$", "");
+			String update = args[i++].replaceFirst("\\{[0-9*]+\\}$", "");
 			updates.add(new ImmutablePair<String, String>(update, freq));
 		}
-		while(i<argv.length && argv[i].toLowerCase().matches("^-+s$")) i++;
-		if(i<argv.length)
-			select=argv[i++];
-		while(i<argv.length)
-			select=select+" "+argv[i++]; // because queries may be parsed by the shell (Cygwin)
+		while (i < args.length && args[i].toLowerCase().matches("^-+s$"))
+			i++;
+		if (i < args.length)
+			select = args[i++];
+		while (i < args.length)
+			select = select + " " + args[i++]; // because queries may be parsed by the shell (Cygwin)
 
 		if (fields.size() == 0) { // might be conllu plus, we check the first line for col names.
 			fields = findFieldsFromComments(inputStream, 1);
 		}
 
 		LOG.info("running CoNLLStreamExtractor");
-		LOG.info("\tbaseURI:       "+baseURI);
-		LOG.info("\tCoNLL columns: "+fields);
-		LOG.info("\tSPARQL update: "+updates);
-		LOG.info("\tSPARQL select: "+select);
+		LOG.info("\tbaseURI:       " + baseURI);
+		LOG.info("\tCoNLL columns: " + fields);
+		LOG.info("\tSPARQL update: " + updates);
+		LOG.info("\tSPARQL select: " + select);
 
 		LOG.info("read SPARQL ..");
-		//UpdateRequest request = UpdateFactory.create();
+		// UpdateRequest request = UpdateFactory.create();
 		StringBuilder sb = new StringBuilder();
-		for(i = 0; i<updates.size(); i++) {
+		for (i = 0; i < updates.size(); i++) {
 			Reader sparqlreader = new StringReader(updates.get(i).getKey());
 			File f = new File(updates.get(i).getKey());
 			URL u = null;
 			try {
 				u = new URL(updates.get(i).getKey());
-			} catch (MalformedURLException e) {}
+			} catch (MalformedURLException e) {
+			}
 
-			if(f.exists()) {			// can be read from a file
+			if (f.exists()) { // can be read from a file
 				sparqlreader = new FileReader(f);
 				sb.append("f");
-			} else if(u!=null) {
+			} else if (u != null) {
 				try {
 					sparqlreader = new InputStreamReader(u.openStream());
 					sb.append("u");
-				} catch (Exception e) {}
+				} catch (Exception e) {
+				}
 			}
 
-			updates.set(i,new ImmutablePair<String, String>("", updates.get(i).getValue()));
+			updates.set(i, new ImmutablePair<String, String>("", updates.get(i).getValue()));
 			BufferedReader in = new BufferedReader(sparqlreader);
-			for(String line = in.readLine(); line!=null; line=in.readLine())
-				updates.set(i,new ImmutablePair<String, String>(updates.get(i).getKey()+line+"\n",updates.get(i).getValue()));
+			for (String line = in.readLine(); line != null; line = in.readLine())
+				updates.set(i, new ImmutablePair<String, String>(updates.get(i).getKey() + line + "\n",
+						updates.get(i).getValue()));
 			sb.append(".");
 		}
 		sb.append(".");
 
-		if(select!=null) {
+		if (select != null) {
 			Reader sparqlreader = new StringReader(select);
 			File f = new File(select);
 			URL u = null;
 			try {
 				u = new URL(select);
-			} catch (MalformedURLException e) {}
+			} catch (MalformedURLException e) {
+			}
 
-			if(f.exists()) {			// can be read from a file
+			if (f.exists()) { // can be read from a file
 				sparqlreader = new FileReader(f);
 				sb.append("f");
-			} else if(u!=null) {
+			} else if (u != null) {
 				try {
 					sparqlreader = new InputStreamReader(u.openStream());
 					sb.append("u");
-				} catch (Exception e) {}
+				} catch (Exception e) {
+				}
 			}
 
 			BufferedReader in = new BufferedReader(sparqlreader);
-			select="";
-			for(String line = in.readLine(); line!=null; line=in.readLine())
-				select=select+line+"\n";
+			select = "";
+			for (String line = in.readLine(); line != null; line = in.readLine())
+				select = select + line + "\n";
 		}
 		sb.append(". ok");
 		LOG.info(sb.toString());
 
-		CoNLLStreamExtractor ex = new CoNLLStreamExtractor();
-		ex.setBaseURI(baseURI);
-		ex.setColumns(fields);
-		ex.setUpdates(updates);
-		ex.setSelect(select);
+		setBaseURI(baseURI);
+		setColumns(fields);
+		setUpdates(updates);
+		setSelect(select);
+	}
 
-		ex.processSentenceStream();
+	public static void main(String[] args) throws IOException {
+		final CoNLLStreamExtractor extractor = new CoNLLStreamExtractor();
+		try {
+			extractor.configureFromCommandLine(args);
+		} catch (ParseException e) {
+			LOG.error(e);
+			System.exit(1);
+		}
+		extractor.processSentenceStream();
 	}
 }
