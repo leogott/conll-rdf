@@ -262,14 +262,15 @@ class CoNLLRDFCommandLine {
 		return new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
 	}
 
-	public static Pair<String, String> parseUpdate(String arg) {
-		final String update = arg.replaceFirst("\\{[0-9u*]+\\}$", "");
+	public static Pair<String, String> parseUpdate(String arg) throws IOException, ParseException {
+		final String updateRaw = arg.replaceFirst("\\{[0-9u*]+\\}$", "");
 		String freq = arg.replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
-		if (arg.equals(freq))
+		if (arg.equals(freq)) {
 			freq = "1";
-		else if (freq.equals("u"))
+		} else if (freq.equals("u")) {
 			freq = "*";
-		return new ImmutablePair<String, String>(update, freq);
+	}
+		return new ImmutablePair<>(updateRaw, freq);
 	}
 
 	public static File parseDir(String arg) throws IOException {

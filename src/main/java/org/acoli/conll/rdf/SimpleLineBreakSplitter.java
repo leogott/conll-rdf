@@ -2,6 +2,7 @@ package org.acoli.conll.rdf;
 
 import java.io.IOException;
 
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
@@ -28,17 +29,23 @@ public class SimpleLineBreakSplitter extends CoNLLRDFComponent {
 
 	@Override
 	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
+		new CoNLLRDFCommandLine("SimpleLineBreakSplitter", "", new Option[] {}, LOG).parseArgs(args);
 		// Nothing to do
 	}
 
 	public static void main(String[] args) throws IOException {
-		System.err.println("synopsis: SimpleLineBreakSplitter");
 		SimpleLineBreakSplitter splitter = new SimpleLineBreakSplitter();
 
-		long start = System.currentTimeMillis();
+		try {
+			splitter.configureFromCommandLine(args);
+		} catch (ParseException e) {
+			LOG.error(e);
+			System.exit(1);
+		}
 
+		long start = System.currentTimeMillis();
 		// READ SENTENCES from System.in
 		splitter.processSentenceStream();
-		System.err.println(((System.currentTimeMillis() - start) / 1000 + " seconds"));
+		LOG.info((System.currentTimeMillis() - start) / 1000 + " seconds");
 	}
 }
