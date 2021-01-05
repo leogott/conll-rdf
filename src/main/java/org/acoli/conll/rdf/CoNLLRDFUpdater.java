@@ -15,6 +15,8 @@
  */
 package org.acoli.conll.rdf;
 
+import static org.acoli.conll.rdf.CoNLLRDFCommandLine.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -44,10 +45,7 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -64,7 +62,6 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateAction;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -73,12 +70,11 @@ import org.apache.log4j.Logger;
  */
 public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class);
-	private static final String DEFAULTUPDATENAME = "DIRECTUPDATE";
 	
 	private final Dataset dataset;
 
 	// Configuration Variables with defaults set
-	private boolean removePrefixDuplicates = false;
+	private boolean prefixDeduplication = false;
 	private int threads = 0;
 	private int lookahead_snts = 0;
 	private int lookback_snts = 0;
@@ -106,7 +102,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	//for statistics
 	private final List<List<Pair<Integer,Long>>> dRTs = Collections.synchronizedList(new ArrayList<List<Pair<Integer,Long>>>());
 	// iterations and execution time of each update in seconds
-	//private int parsedSentences = 0; // no longer used since graphsout default is set at sentence readin
 
 
 	private class UpdateThread extends Thread {
@@ -519,8 +514,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 
 		setThreads(threads);
 
-		//runtime
-		//parsedSentences = 0;
 		running = false;
 	}
 
@@ -598,7 +591,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	 * Instruct the Updater to remove duplicates of RDF prefixes, to avoid issues with segmented data using a single prefix header.
 	 */
 	public void activateRemovePrefixDuplicates() {
-		this.removePrefixDuplicates = true;
+		this.prefixDeduplication = true;
 	}
 
 	/**
@@ -641,16 +634,15 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	 * 			<Name of Update>, <update script>OR<path to script>, <iterations>
 	 * @throws IOException
 	 */
-	public void parseUpdates(List<Triple<String, String, String>> updatesRaw) throws IOException {
-		this.updates.clear();
+	public void parseUpdates(List<Triple<String, String, String>> updatesRaw) throws IOException, ParseException {
+		updates.clear();
 		final List<Triple<String, String, String>> updatesOut = new ArrayList<Triple<String, String, String>>(updatesRaw.size());
-		final StringBuilder sb = new StringBuilder(); // debug output
 
 		int updateNo = 0;
 		for(Triple<String, String, String> update: updatesRaw) {
 			String updateName = update.getLeft();
 			final String updateScriptRaw = update.getMiddle(); // either an URL/ a path to, or the verbatim sparql
-			final String updateScript; // will eventually contain the sparql query
+			String updateScript = null; // will eventually contain the sparql query
 			final String updateIterations = update.getRight();
 			updateNo++; // Used for logging
 
@@ -663,55 +655,37 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			 * - verbatim query was not quoted
 			 */
 
-			Reader sparqlreader = null;
+			// Try if update is an URL
 			URL url = null;
+			try {
+				url = new URL(updateScriptRaw);
+				LOG.debug("URL Stream ok");
+				updateScript = readUrl(url);
+			} catch (MalformedURLException e) {
+				LOG.trace(e);
+				LOG.debug("Update is not a valid URL " + updateScriptRaw); // this occurs if the update is verbatim
+			} catch (IOException e) {
+				throw new IOException("Failed to open input stream from URL " + updateScriptRaw, e);
+			}
 
 			// Try if Update is a FilePath
 			final File file = new File(updateScriptRaw);
-			if(file.exists()) { // can be read from a file
+			if(updateScript == null && file.exists()) { // can be read from a file
 				try {
-					sparqlreader = new FileReader(file);
+					updateScript = readString(file.toPath());
 					LOG.debug("FileReader ok");
-					sb.append("f");
 				} catch (FileNotFoundException e) {
 					// the update is a path to a file which exists, but it could not be opened
-					LOG.error("Failed to read file " + updateScriptRaw, e);
-					System.exit(1);
-				}
-			}
-
-			// Try if update is an URL
-			if (sparqlreader == null) {
-				try {
-					url = new URL(updateScriptRaw);
-					sparqlreader = new InputStreamReader(url.openStream());
-					LOG.debug("URL Stream ok");
-					sb.append("u");
-				} catch (MalformedURLException e) {
-					LOG.debug("Update is not a valid URL " + updateScriptRaw); // this occurs if the update is verbatim
-					LOG.trace("Trace:", e);
-				} catch (IOException e) {
-					LOG.error("Failed to open input stream from URL " + updateScriptRaw, e); // this is probably bad
-					System.exit(1);
+					throw new IOException("Failed to read file " + updateScriptRaw, e);
 				}
 			}
 
 			// check for String as Update and set update name to default
-			if (sparqlreader != null) {
+			if (updateScript == null) {
 				updateName = DEFAULTUPDATENAME;
-			} else {
-				sparqlreader = new StringReader(updateScriptRaw);
+				updateScript = updateScriptRaw;
 				LOG.debug("StringReader ok");
 			}
-
-			final BufferedReader in = new BufferedReader(sparqlreader);
-			final StringBuilder updateBuff = new StringBuilder();
-			for(String line = in.readLine(); line!=null; line=in.readLine()) {
-				updateBuff.append(line + "\n");
-			}
-
-			updateScript = updateBuff.toString();
-			isValidUTF8(updateScript, "SPARQL update String is not UTF-8 encoded for " + updateName);
 
 			try {
 				@SuppressWarnings("unused")
@@ -720,19 +694,16 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 				LOG.error("Failed to parse argument as sparql");
 				// if update looks like a file, but can't be found
 				if(updateScriptRaw.toLowerCase().endsWith(".sparql") && !(file.exists()) && (url == null)) {
-					LOG.error("The passed update No. "+updateNo+" looks like a file-path, however the file " + updateScriptRaw + " could not be found.");
 					LOG.debug("SPARQL parse exception for Update No. "+updateNo+": "+updateName+"\n" + e + "\n" + updateScript);
+					throw new ParseException("The passed update No. "+updateNo+" looks like a file-path, however the file " + updateScriptRaw + " could not be found.");
 				} else {
-					LOG.error("SPARQL parse exception for Update No. "+updateNo+": "+updateName+"\n" + e + "\n" + updateScript); // this is SPARQL code with broken SPARQL syntax
+					throw new ParseException("SPARQL parse exception for Update No. "+updateNo+": "+updateName+"\n" + e + "\n" + updateScript); // this is SPARQL code with broken SPARQL syntax
 				}
-				System.exit(1);
 			}
 			updatesOut.add(new ImmutableTriple<String, String, String> (updateName, updateScript, updateIterations));
 			LOG.debug("Update parsed ok");
-			sb.append(".");
 		}
-		this.updates.addAll(Collections.synchronizedList(updatesOut));
-		LOG.debug(sb.toString());
+		updates.addAll(Collections.synchronizedList(updatesOut));
 	}
 
 	/**
@@ -822,11 +793,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 					graphOutputSentences.add(sentID);
 					LOG.debug("Graph Output defaults to first sentence: " + sentID);
 				}
-				// --> deprecated
-				//parsedSentences++;
-				//execute updates using thread handler  --> now in lookahead handling
-				//executeThread(buffer);
-				// <-- deprecated
 
 				//lookahead
 				//add ALL sentences to sentBufferLookahead
@@ -851,10 +817,6 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			buffer=buffer+line+"\n";
 			lastLine=line;
 		}
-		// --> deprecated
-		//parsedSentences++;
-		//executeThread(buffer);
-		// --> deprecated
 
 		//lookahead
 		//add final sentence (with prefixes if necessary)
@@ -938,7 +900,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			if (sentBufferOut.get(0).matches("\\d+")) break;
 
 			String outString = new String();
-			if (removePrefixDuplicates) {
+			if (prefixDeduplication) {
 				String prefixCacheTMP = new String();
 				for (String buffLine:sentBufferOut.remove(0).split("\n")) {
 					if (buffLine.trim().startsWith("@prefix")) {
@@ -1027,21 +989,111 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		}
 	}
 
-	private static Options getOptions() {
-		final Options options = new Options();
-		// Define cli options in the correct order for the help-message
-		options
-			.addOption(Option.builder("loglevel").hasArg(true).desc("set log level to LEVEL").argName("level").build())
-			.addOption("threads", true, "use T threads max\ndefault: half of available logical processor cores")
-			.addOption("lookahead", true, "cache N further sentences in lookahead graph")
-			.addOption("lookback", true, "cache N preceeding sentences in lookback graph")
-			.addOption("prefixDeduplication", false, "Remove duplicates of TTL-Prefixes")
-			.addOption(Option.builder("custom").hasArg(false).desc("use custom update scripts")/*.required()*/.build())
-			.addOption("model", true, "to load additional Models into local graph")
-			.addOption("graphsout", true, "output directory for the .dot graph files\nfollowed by the IDs of the sentences to be visualized\ndefault: first sentence only")
-			.addOption("triplesout", true, "same as graphsout but write N-TRIPLES for text debug instead.")
-			.addOption("updates", true, "followed by SPARQL scripts paired with {iterations/u}");
-		return options;
+	private void addUpdate(String updateRaw, String updateIterationLimit) throws IOException, ParseException {
+		String updateName;
+		String updateString;
+		// TODO implement method
+		File file = new File(updateRaw);
+		if (file.exists() && file.isFile()) {
+			updateString = readString(file.toPath());
+			updates.add(new ImmutableTriple<String, String, String>(updateRaw, updateString, updateIterationLimit));
+		}
+		// URL
+		try {
+			URL url = new URL(updateRaw);
+			LOG.debug("URL Stream ok");
+			updateString = readUrl(url);
+			updates.add(new ImmutableTriple<String, String, String>(updateRaw, updateString, updateIterationLimit));
+		} catch (MalformedURLException e) {
+			LOG.trace(e);
+			LOG.debug("Update is not a valid URL " + updateRaw); // this occurs if the update is verbatim
+		} catch (IOException e) {
+			throw new IOException("Failed to open input stream from URL " + updateRaw, e);
+		}
+		if (updateRaw.endsWith(".sparql")) {
+			throw new ParseException("The passed update looks like a file-path, however the file " + updateRaw + " could not be found.");
+		} else {
+			updateName = CoNLLRDFComponent.DEFAULTUPDATENAME;
+			updateString = updateRaw;
+		}
+		updates.add(new ImmutableTriple<String, String, String>(updateName, updateString, updateIterationLimit));
+		// updates.add(new ImmutableTriple<String, UpdateRequest, String> (updateName, UpdateFactory.create(updateQuery), updateIterationLimit));
+	}
+
+	@Override
+	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
+		final CommandLine cmd = new CoNLLRDFCommandLine(
+			"CoNLLRDFUpdater [-loglevel LEVEL] [-threads T] [-lookahead N] [-lookback N] [-custom [-model URI [GRAPH]]* [-graphsout DIR [SENT_ID ...]] [-triplesout DIR [SENT_ID ...]] -updates [UPDATE ...]]", 
+			"read TTL from stdin => update CoNLL-RDF",
+			new Option[] {
+				// Define cli options in the correct order for the help-message
+				Option.builder("loglevel").hasArg().desc("set log level to LEVEL").argName("level").build(),
+				Option.builder("threads").hasArg().desc("use T threads max\ndefault: half of available logical processor cores").type(Number.class).build(),
+				Option.builder("lookahead").hasArg().desc("cache N further sentences in lookahead graph").type(Number.class).build(),
+				Option.builder("lookback").hasArg().desc("cache N preceeding sentences in lookback graph").type(Number.class).build(),
+				new Option("prefixDeduplication", false, "Remove duplicates of TTL-Prefixes"),
+				Option.builder("custom").hasArg(false).desc("use custom update scripts").required().build(),
+				new Option("model", true, "to load additional Models into local graph"),
+				new Option("graphsout", true,
+						"output directory for the .dot graph files\nfollowed by the IDs of the sentences to be visualized\ndefault: first sentence only"),
+				new Option("triplesout", true, "same as graphsout but write N-TRIPLES for text debug instead."),
+				new Option("updates", true, "followed by SPARQL scripts paired with {iterations/u}")
+			}, LOG).parseArgs(args);
+
+		if (cmd.hasOption("threads")) {
+			setThreads(((Number) cmd.getParsedOptionValue("threads")).intValue());
+		}
+		if (cmd.hasOption("lookahead")) {
+			activateLookahead(((Number) cmd.getParsedOptionValue("lookahead")).intValue());
+		}
+		if (cmd.hasOption("lookback")) {
+			activateLookback(((Number) cmd.getParsedOptionValue("lookback")).intValue());
+		}
+		if (cmd.hasOption("prefixDeduplication")) {
+			activateRemovePrefixDuplicates();
+		}
+		// READ GRAPHSOUT PARAMETERS
+		if (cmd.hasOption("graphsout")) {
+			List<String> graphsoutArgs = Arrays.asList(cmd.getOptionValues("graphsout"));
+			String outputDir = graphsoutArgs.remove(0);
+			List<String> outputSentences = graphsoutArgs;
+			activateGraphsOut(outputDir, outputSentences);
+		}
+		// READ TRIPLESOUT PARAMETERS
+		if (cmd.hasOption("triplesout")) {
+			List<String> triplesoutArgs = Arrays.asList(cmd.getOptionValues("triplesout"));
+			String outputDir = triplesoutArgs.remove(0);
+			List<String> outputSentences = triplesoutArgs;
+			activateTriplesOut(outputDir, outputSentences);
+		}
+
+		if (cmd.hasOption("model")) {
+			for (Option opt : cmd.getOptions()) {
+				if (opt.getOpt() == "model") { // opt.equals(model)
+					String[] model = opt.getValues();
+					try {
+						if (model.length == 1) {
+							loadGraph(new URI(model[0]), new URI(model[0]));
+						} else if (model.length == 2) {
+							loadGraph(new URI(model[0]), new URI(model[1]));
+						} else {
+							throw new ParseException("Error while loading model: Please provide one or two URIs");
+						}
+					} catch (URISyntaxException e) {
+						throw new ParseException("Error while loading model: Could not parse given arguments as URI");
+					}
+				}
+			}
+		}
+
+		if (cmd.hasOption("updates")) {
+			for (String arg : Arrays.asList(cmd.getOptionValues("updates"))) {
+				Pair<String, String> parsed = parseUpdate(arg);
+				// should be <#UPDATEFILENAMEORSTRING, #UPDATESTRING, #UPDATEITER>
+				updates.add(new ImmutableTriple<String, String, String>(parsed.getKey(), parsed.getKey(), parsed.getValue()));
+			}
+			parseUpdates(updates);
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -1056,161 +1108,5 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		// READ SENTENCES from System.in
 		updater.processSentenceStream();
 		LOG.debug((System.currentTimeMillis()-start)/1000 + " seconds");
-	}
-
-	@Override
-	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
-		final Options options = getOptions();
-		final HelpFormatter formatter = new HelpFormatter();
-		final CommandLine cmd;
-		// PRINT USAGE HELP MESSAGE
-		final StringWriter info = new StringWriter();
-		final PrintWriter pw = new PrintWriter(info);
-		formatter.setOptionComparator(null); // don't sort cli-options in help message
-		formatter.setSyntaxPrefix("synopsis: ");
-		formatter.printHelp(pw, 80, "CoNLLRDFUpdater", "read TTL from stdin => update CoNLL-RDF", options,
-			formatter.getLeftPadding(), formatter.getDescPadding(), null);
-		//formatter.printHelp("CoNLLRDFUpdater", "read TTL from stdin => update CoNLL-RDF", options, null, true);
-		pw.flush();
-		LOG.info(info);
-		/** LOG.info("synopsis: CoNLLRDFUpdater [-loglevel LEVEL] [-threads T] [-lookahead N] [-lookback N]\n"
-		* + "\t[-custom [-model URI [GRAPH]]* [-graphsout DIR [SENT_ID]] [-triplesout DIR [SENT_ID]] -updates [UPDATE]]\n");
-		*/
-		// PARSE the CommandLine Options
-		try {
-			cmd = new DefaultParser().parse(options, args);
-		} catch (ParseException e) {
-			LOG.error(e);
-			System.exit(1);
-			return;
-		}
-		int i;
-		// READ LOGLEVEL
-		if (cmd.hasOption("loglevel")) {
-			final Level level = Level.toLevel(cmd.getOptionValue("loglevel"));
-			LOG.setLevel(level);
-			LOG.info("loglevel set to " + level.toString());
-		}
-		// debug cli parsing (after setting the loglevel)
-		LOG.debug(Arrays.asList(args).toString());
-		LOG.debug(Arrays.asList(cmd.getOptions()).toString());
-		LOG.debug(cmd.getArgList().toString());
-		// READ THREAD PARAMETERS
-		int threads = 0;
-		if (cmd.hasOption("threads")) {
-			try {
-				threads = Integer.parseInt(cmd.getOptionValue("threads"));
-			} catch (Exception e) {
-				LOG.error("Wrong usage of threads parameter. NaN.");
-				System.exit(1);
-				return;
-			}
-		}
-		setThreads(threads);
-		// READ LOOKAHEAD PARAMETERS
-		if (cmd.hasOption("lookahead")) {
-			try {
-				activateLookahead(Integer.parseInt(cmd.getOptionValue("lookahead")));
-			} catch (Exception e) {
-				LOG.error("Wrong usage of lookahead parameter. NaN.");
-				System.exit(1);
-				return;
-			}
-		}
-		// READ LOOKBACK PARAMETERS
-		if (cmd.hasOption("lookback")) {
-			try {
-				activateLookback(Integer.parseInt(cmd.getOptionValue("lookback")));
-			} catch (Exception e) {
-				LOG.error("Wrong usage of lookback parameter. NaN.");
-				System.exit(1);
-				return;
-			}
-		}
-		// PREFIX DUPLICATES
-		if (cmd.hasOption("prefixDeduplication")) {
-			LOG.debug("Activated Prefix Deduplication");
-			activateRemovePrefixDuplicates();
-		}
-		// READ MODE (currently only CUSTOM)
-		boolean CUSTOM = cmd.hasOption("custom");
-		if(!CUSTOM ) { // no default possible here
-			LOG.error("Please specify update script.");
-		}
-		// READ GRAPHSOUT PARAMETERS
-		if (cmd.hasOption("graphsout")) {
-			List<String> graphOutputSentences = new ArrayList<String>();
-			i = 0;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+graphsout$")) i++;
-			i++;
-			String graphOutputDir = args[i];
-			i++;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+.*$")) {
-				graphOutputSentences.add(args[i++]);
-			}
-			activateGraphsOut(graphOutputDir, graphOutputSentences);
-		}
-		// READ TRIPLESOUT PARAMETERS
-		if (cmd.hasOption("triplesout")) {
-			List<String> triplesOutputSentences = new ArrayList<String>();
-			i = 0;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+triplesout$")) i++;
-			i++;
-			String triplesOutputDir = args[i];
-			i++;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+.*$")) {
-				triplesOutputSentences.add(args[i++]);
-			}
-			activateTriplesOut(triplesOutputDir, triplesOutputSentences);
-		}
-		//CUSTOM UPDATE SCRIPT MODE
-		if(CUSTOM) {
-			// READ ALL MODELS from System.in
-			i = 0;
-			// should be <#UPDATEFILENAMEORSTRING, #UPDATESTRING, #UPDATEITER>
-			List<Triple<String, String, String>> updates = new ArrayList<Triple<String, String, String>>();
-			List<String> models = new ArrayList<String>();
-
-			while(i<args.length && !args[i].toLowerCase().matches("^-+custom$")) i++;
-			i++;
-			while(i<args.length) {
-				while(i<args.length && !args[i].toLowerCase().matches("^-+model$")) i++;
-				i++;
-				while(i<args.length && !args[i].toLowerCase().matches("^-+.*$")) {
-					models.add(args[i++]);
-				}
-				try {
-					if (models.size()==1) {
-						loadGraph(new URI(models.get(0)), new URI(models.get(0)));
-					} else if (models.size()==2){
-						loadGraph(new URI(models.get(0)), new URI(models.get(1)));
-					} else if (models.size()>2){
-						throw new IOException("Error while loading model: Please use -custom [-model URI [GRAPH]]* -updates [UPDATE]+");
-					}
-				} catch (URISyntaxException e) {
-					throw (ParseException) new ParseException("Could not Parse external model URIs").initCause(e);
-				}
-					
-				models.removeAll(models);
-			}
-
-			// READ ALL UPDATES from System.in
-			i=0;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+custom$")) i++;
-			i++;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+updates$")) i++;
-			i++;
-			while(i<args.length && !args[i].toLowerCase().matches("^-+.*$")) {
-				String freq;
-				freq = args[i].replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
-				if (args[i].equals(freq)) // update script without iterations in curly brackets defaults to 1
-					freq = "1";
-				else if (freq.equals("u"))
-					freq = "*";
-				String update = args[i++].replaceFirst("\\{[0-9u*]+\\}$", "");
-				updates.add(new ImmutableTriple<String, String, String>(update, update, freq));
-			}
-			parseUpdates(updates);
-		}
 	}
 }

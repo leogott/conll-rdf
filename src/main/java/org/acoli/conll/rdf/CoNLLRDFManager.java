@@ -110,7 +110,7 @@ public class CoNLLRDFManager {
 		return output;
 	}
 
-	public void buildComponentStack() throws IOException {
+	public void buildComponentStack() throws IOException, ParseException {
 		//READ INPUT PARAMETER
 		input = parseConfAsInputStream(config.get("input").asText());
 
@@ -179,7 +179,7 @@ public class CoNLLRDFManager {
 		return ex;
 	}
 
-	private CoNLLRDFComponent buildUpdater(ObjectNode conf) throws IOException {
+	private CoNLLRDFComponent buildUpdater(ObjectNode conf) throws IOException, ParseException {
 
 		// READ THREAD PARAMETERS
 		int threads = 0;
