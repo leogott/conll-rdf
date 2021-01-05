@@ -1,0 +1,4 @@
+[submodule "src/test/java/org/acoli/conll/rdf"]
+	path = src/test/java/org/acoli/conll/rdf
+	url = https://github.com/leogott/conll-rdf
+	branch = test
