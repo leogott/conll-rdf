@@ -23,6 +23,8 @@ import org.apache.jena.rdf.listeners.ChangedListener;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.update.*;
 import org.apache.log4j.Logger;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -289,117 +291,95 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 
 	@Override
 	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
-		LOG.info("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"
-		+ "\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"
-		+ "\tFIELDi        CoNLL field label, cf. CoNLL2RDF\n"
-		+ "\tSPARQL_UPDATE SPARQL UPDATE (DELETE/INSERT) query, either literally or its location (file/uri)\n"
-		+ "\t              can be followed by an optional integer in {}-parentheses = number of repetitions\n"
-		+ "\t              The SPARQL_UPDATE parameter is DEPRECATED - please use CoNLLRDFUpdater instead!\n"
-		+ "\tSPARQL_SELECT SPARQL SELECT statement to produce TSV output\n"
-		+ "\treads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries");
-
-		String baseURI = args[0];
-		List<String> fields = new ArrayList<String>();
+		//FIXME
 		List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
-		String select = null;
-		final BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
 
-		int i = 1;
-		while (i < args.length && !args[i].toLowerCase().matches("^-+u$"))
-			fields.add(args[i++]);
-		while (i < args.length && args[i].toLowerCase().matches("^-+u$"))
-			i++;
-		while (i < args.length && !args[i].toLowerCase().matches("^-+s$")) {
-			String freq;
-			freq = args[i].replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
-			if (args[i].equals(freq))
-				freq = "1";
-			else if (freq.equals("u"))
-				freq = "*";
-			String update = args[i++].replaceFirst("\\{[0-9*]+\\}$", "");
-			updates.add(new ImmutablePair<String, String>(update, freq));
+		final CommandLine cmd = new CoNLLRDFCommandLine("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"
+		+ "\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"
+		+ "\tFIELDi        CoNLL field label, cf. CoNLL2RDF",
+		"reads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries",
+		new Option[] {
+			Option.builder("s").hasArg().hasArgs().desc("SPARQL SELECT statement to produce TSV output").build(),
+			Option.builder("u").hasArgs().argName("sparql_update").desc("DEPRECATED - please use CoNLLRDFUpdater instead!").build()
+			/* "SPARQL_UPDATE SPARQL UPDATE (DELETE/INSERT) query, either literally or its location (file/uri).
+			Can be followed by an optional integer in {}-parentheses = number of repetitions" */
+		}, LOG).parseArgs(args);
+
+		List<String> argList = cmd.getArgList();
+		if (argList.isEmpty()) {
+			throw new ParseException("Missing required Argument baseURI");
 		}
-		while (i < args.length && args[i].toLowerCase().matches("^-+s$"))
-			i++;
-		if (i < args.length)
-			select = args[i++];
-		while (i < args.length)
-			select = select + " " + args[i++]; // because queries may be parsed by the shell (Cygwin)
+		setBaseURI(argList.remove(0));
 
-		if (fields.size() == 0) { // might be conllu plus, we check the first line for col names.
-			fields = findFieldsFromComments(inputStream, 1);
+		if (argList.isEmpty()) { // might be conllu plus, we check the first line for col names.
+			setColumns(findFieldsFromComments(getInputStream(), 1));
+			if (getColumns().isEmpty()) { // FIXME this should probably be a catch block
+				throw new ParseException("Missing required Argument Fields/Columns not found as global.columns either");
+			}
+		} else {
+			setColumns(argList);
+		}
+
+		if (cmd.hasOption("s")) {
+			// setSelect(parseSparqlArg(String.join(" ", Arrays.asList(cmd.getOptionValues("s")))));
+			select = String.join(" ", Arrays.asList(cmd.getOptionValues("s"))); //FIXME
+		}
+
+		if (cmd.hasOption("u")) {
+			LOG.warn("using -u to provide updates is deprecated");
+			for (String arg : cmd.getOptionValues("u")) {
+				Pair<String, String> update = parseUpdate(arg);
+				updates.add(new ImmutablePair<String, String>(parseSparqlArg(update.getKey()), update.getValue()));
+				// FIXME
+			}
 		}
 
 		LOG.info("running CoNLLStreamExtractor");
-		LOG.info("\tbaseURI:       " + baseURI);
-		LOG.info("\tCoNLL columns: " + fields);
-		LOG.info("\tSPARQL update: " + updates);
-		LOG.info("\tSPARQL select: " + select);
+		LOG.info("\tbaseURI:       " + getBaseURI());
+		LOG.info("\tCoNLL columns: " + getColumns());
+	}
 
-		LOG.info("read SPARQL ..");
+	public Pair<String, String> parseUpdate(String updateArg) throws IOException {
+		String freq;
+		// FIXME
+		freq = updateArg.replaceFirst(".*\\{([0-9u*]+)\\}$", "$1");
+		if (updateArg.equals(freq)) {
+			freq = "1";
+		} else if (freq.equals("u")) {
+			freq = "*";
+		}
+		final String updateRaw = updateArg.replaceFirst("\\{[0-9*]+\\}$", "");
+		return new ImmutablePair<String, String>(updateRaw, freq);
 		// UpdateRequest request = UpdateFactory.create();
-		StringBuilder sb = new StringBuilder();
-		for (i = 0; i < updates.size(); i++) {
-			Reader sparqlreader = new StringReader(updates.get(i).getKey());
-			File f = new File(updates.get(i).getKey());
-			URL u = null;
-			try {
-				u = new URL(updates.get(i).getKey());
-			} catch (MalformedURLException e) {
-			}
+	}
 
-			if (f.exists()) { // can be read from a file
-				sparqlreader = new FileReader(f);
-				sb.append("f");
-			} else if (u != null) {
-				try {
-					sparqlreader = new InputStreamReader(u.openStream());
-					sb.append("u");
-				} catch (Exception e) {
-				}
-			}
+	public String parseSparqlArg(String sparqlArg) throws IOException {
+		// FIXME
+		// SELECT
+		String sparql = "";
 
-			updates.set(i, new ImmutablePair<String, String>("", updates.get(i).getValue()));
-			BufferedReader in = new BufferedReader(sparqlreader);
-			for (String line = in.readLine(); line != null; line = in.readLine())
-				updates.set(i, new ImmutablePair<String, String>(updates.get(i).getKey() + line + "\n",
-						updates.get(i).getValue()));
-			sb.append(".");
+		Reader sparqlreader = new StringReader(sparqlArg);
+		File file = new File(sparqlArg);
+		URL url = null;
+		try {
+			url = new URL(sparqlArg);
+		} catch (MalformedURLException e) {
 		}
-		sb.append(".");
 
-		if (select != null) {
-			Reader sparqlreader = new StringReader(select);
-			File f = new File(select);
-			URL u = null;
+		if (file.exists()) { // can be read from a file
+			sparqlreader = new FileReader(file);
+		} else if (url != null) {
 			try {
-				u = new URL(select);
-			} catch (MalformedURLException e) {
+				sparqlreader = new InputStreamReader(url.openStream());
+			} catch (Exception e) {
 			}
-
-			if (f.exists()) { // can be read from a file
-				sparqlreader = new FileReader(f);
-				sb.append("f");
-			} else if (u != null) {
-				try {
-					sparqlreader = new InputStreamReader(u.openStream());
-					sb.append("u");
-				} catch (Exception e) {
-				}
-			}
-
-			BufferedReader in = new BufferedReader(sparqlreader);
-			select = "";
-			for (String line = in.readLine(); line != null; line = in.readLine())
-				select = select + line + "\n";
 		}
-		sb.append(". ok");
-		LOG.info(sb.toString());
 
-		setBaseURI(baseURI);
-		setColumns(fields);
-		setUpdates(updates);
-		setSelect(select);
+		BufferedReader in = new BufferedReader(sparqlreader);
+		for (String line = in.readLine(); line != null; line = in.readLine()) {
+			sparql = sparql + line + "\n";
+		}
+		return sparql;
 	}
 
 	public static void main(String[] args) throws IOException {
