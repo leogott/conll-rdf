@@ -27,7 +27,7 @@ public class SimpleLineBreakSplitter extends CoNLLRDFComponent {
 		getOutputStream().close();
 	}
 
-	@Override
+	//TODO move method @Override
 	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
 		new CoNLLRDFCommandLine("SimpleLineBreakSplitter", "", new Option[] {}, LOG).parseArgs(args);
 		// Nothing to do
