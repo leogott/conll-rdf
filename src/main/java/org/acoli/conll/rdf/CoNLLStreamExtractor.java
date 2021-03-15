@@ -23,8 +23,6 @@ import org.apache.jena.rdf.listeners.ChangedListener;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.update.*;
 import org.apache.log4j.Logger;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -287,56 +285,6 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 			m.write(out, "TTL");
 			out.flush();
 		}
-	}
-
-	//TODO move method @Override
-	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
-		//FIXME
-		List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
-
-		final CommandLine cmd = new CoNLLRDFCommandLine("synopsis: CoNLLStreamExtractor baseURI FIELD1[.. FIELDn] [-u SPARQL_UPDATE1..m] [-s SPARQL_SELECT]\n"
-		+ "\tbaseURI       CoNLL base URI, cf. CoNLL2RDF\n"
-		+ "\tFIELDi        CoNLL field label, cf. CoNLL2RDF",
-		"reads CoNLL from stdin, splits sentences, creates CoNLL RDF, applies SPARQL queries",
-		new Option[] {
-			Option.builder("s").hasArg().hasArgs().desc("SPARQL SELECT statement to produce TSV output").build(),
-			Option.builder("u").hasArgs().argName("sparql_update").desc("DEPRECATED - please use CoNLLRDFUpdater instead!").build()
-			/* "SPARQL_UPDATE SPARQL UPDATE (DELETE/INSERT) query, either literally or its location (file/uri).
-			Can be followed by an optional integer in {}-parentheses = number of repetitions" */
-		}, LOG).parseArgs(args);
-
-		List<String> argList = cmd.getArgList();
-		if (argList.isEmpty()) {
-			throw new ParseException("Missing required Argument baseURI");
-		}
-		setBaseURI(argList.remove(0));
-
-		if (argList.isEmpty()) { // might be conllu plus, we check the first line for col names.
-			setColumns(findFieldsFromComments(getInputStream(), 1));
-			if (getColumns().isEmpty()) { // FIXME this should probably be a catch block
-				throw new ParseException("Missing required Argument Fields/Columns not found as global.columns either");
-			}
-		} else {
-			setColumns(argList);
-		}
-
-		if (cmd.hasOption("s")) {
-			// setSelect(parseSparqlArg(String.join(" ", Arrays.asList(cmd.getOptionValues("s")))));
-			select = String.join(" ", Arrays.asList(cmd.getOptionValues("s"))); //FIXME
-		}
-
-		if (cmd.hasOption("u")) {
-			LOG.warn("using -u to provide updates is deprecated");
-			for (String arg : cmd.getOptionValues("u")) {
-				Pair<String, String> update = parseUpdate(arg);
-				updates.add(new ImmutablePair<String, String>(parseSparqlArg(update.getKey()), update.getValue()));
-				// FIXME
-			}
-		}
-
-		LOG.info("running CoNLLStreamExtractor");
-		LOG.info("\tbaseURI:       " + getBaseURI());
-		LOG.info("\tCoNLL columns: " + getColumns());
 	}
 
 	public Pair<String, String> parseUpdate(String updateArg) throws IOException {
