@@ -888,12 +888,13 @@ public class CoNLLRDFFormatter extends CoNLLRDFComponent {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final CoNLLRDFFormatter formatter = new CoNLLRDFFormatter();
+		final CoNLLRDFFormatter formatter;
 		try {
-			formatter.configureFromCommandLine(args);
+			formatter = CoNLLRDFFormatterFactory.getFormatter(args);
 		} catch (ParseException e) {
 			LOG.error(e);
 			System.exit(1);
+			return;
 		}
 		formatter.processSentenceStream();
 	}
