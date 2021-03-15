@@ -517,8 +517,21 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		running = false;
 	}
 
-	private void setThreads(int threads) {
+	public void setThreads(int threads) {
 		this.threads = threads;
+	}
+	public int getThreads() {
+		return threads;
+	}
+
+	public String[] getUpdateNames() {
+		return updates.stream().map(t -> t.getLeft()).toArray(String[]::new);
+	}
+	public String[] getUpdateStrings() {
+		return updates.stream().map(t -> t.getMiddle()).toArray(String[]::new);
+	}
+	public String[] getUpdateMaxIterations() {
+		return updates.stream().map(t -> t.getRight()).toArray(String[]::new);
 	}
 
 	/**
@@ -530,6 +543,9 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		if (lookahead_snts < 0) lookahead_snts = 0;
 		this.lookahead_snts = lookahead_snts;
 	}
+	public int getLookahead() {
+		return lookahead_snts;
+	}
 
 	/**
 	 * Activates the lookback mode for caching a fixed number of preceding sentences per thread.
@@ -539,6 +555,9 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	public void activateLookback(int lookback_snts) {
 		if (lookback_snts < 0) lookback_snts = 0;
 		this.lookback_snts = lookback_snts;
+	}
+	public int getLookback() {
+		return lookback_snts;
 	}
 
 	/**
@@ -563,6 +582,12 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		}
 		graphOutputSentences.addAll(sentences);
 	}
+	public File getGraphOutputDir() {
+		return graphOutputDir;
+	}
+	public String[] getGraphOutputSentences() {
+		return graphOutputSentences.toArray(new String[graphOutputSentences.size()]);
+	}
 
 	/**
 	 * Activates the triplesout mode for single ntriples-files per execution step.
@@ -586,12 +611,21 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		}
 		triplesOutputSentences.addAll(sentences);
 	}
+	public File getTriplesOutputDir() {
+		return triplesOutputDir;
+	}
+	public String[] getTriplesOutputSentences() {
+		return triplesOutputSentences.toArray(new String[triplesOutputSentences.size()]);
+	}
 
 	/**
 	 * Instruct the Updater to remove duplicates of RDF prefixes, to avoid issues with segmented data using a single prefix header.
 	 */
 	public void activatePrefixDeduplication() {
 		this.prefixDeduplication = true;
+	}
+	public boolean getPrefixDeduplication() {
+		return prefixDeduplication;
 	}
 
 	/**
@@ -624,6 +658,13 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			throw ex;
 		}
 		LOG.info("done...");
+	}
+	public boolean hasGraph(String name) {
+		return dataset.containsNamedModel(name);
+	}
+	public Model getGraph(String name) {
+		//TODO return a copy instead of a reference
+		return dataset.getNamedModel(name);
 	}
 
 	/**
