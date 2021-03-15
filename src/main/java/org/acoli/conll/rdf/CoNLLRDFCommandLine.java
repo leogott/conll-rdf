@@ -86,11 +86,10 @@ class CoNLLRDFCommandLine {
 	/**
 	 * 
 	 * @param args
-	 * @param debug
 	 * @return the parsed Arguments as CommandLine
 	 * @throws ParseException
 	 */
-	public CommandLine parseArgs(String[] args, boolean debug) throws ParseException {
+	public CommandLine parseArgs(String[] args) throws ParseException {
 		final CommandLine cmd;
 		try {
 			cmd = new DefaultParser().parse(this.options, args);
@@ -98,11 +97,11 @@ class CoNLLRDFCommandLine {
 			logUsageHelp();
 			throw e;
 		}
-		if (debug) {
-			LOG.debug("String[] args = " + Arrays.asList(args).toString());
-			LOG.debug("Option[] opts = " + Arrays.asList(cmd.getOptions()).toString());
-			LOG.debug("Unparsed args = " + cmd.getArgList().toString());
-		}
+
+		LOG.debug("String[] args = " + Arrays.toString(args));
+		LOG.debug("Option[] opts = " + Arrays.deepToString(cmd.getOptions()));
+		LOG.debug("Unparsed args = " + cmd.getArgList().toString());
+
 		// print help and exit
 		if (cmd.hasOption("help")) {
 			printUsageHelp();
@@ -117,9 +116,6 @@ class CoNLLRDFCommandLine {
 			logger.setLevel(Level.toLevel(cmd.getOptionValue("loglevel")));
 		}
 		return cmd;
-	}
-	public CommandLine parseArgs(String[] args) throws ParseException {
-		return parseArgs(args, false);
 	}
 
 	/**
