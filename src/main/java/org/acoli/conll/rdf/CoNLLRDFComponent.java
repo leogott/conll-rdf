@@ -7,8 +7,6 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.cli.ParseException;
-
 public abstract class CoNLLRDFComponent implements Runnable {
 	static final List<Integer> CHECKINTERVAL = Arrays.asList(3, 10, 25, 50, 100, 200, 500);
 	static final String DEFAULTUPDATENAME = "DIRECTUPDATE";
@@ -19,7 +17,7 @@ public abstract class CoNLLRDFComponent implements Runnable {
 	private BufferedReader inputStream = new BufferedReader(new InputStreamReader(System.in));
 	private PrintStream outputStream = System.out;
 
-	public abstract void configureFromCommandLine(String[] args) throws IOException, ParseException;
+	//TODO remove all references to configureFromCommandLine(String[] args)
 
 	protected abstract void processSentenceStream() throws IOException;
 

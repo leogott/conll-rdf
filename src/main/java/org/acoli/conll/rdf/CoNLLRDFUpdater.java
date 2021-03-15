@@ -21,12 +21,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -69,7 +67,7 @@ import org.apache.log4j.Logger;
  *  @author Christian Faeth {@literal faeth@em.uni-frankfurt.de}
  */
 public class CoNLLRDFUpdater extends CoNLLRDFComponent {
-	private static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class);
+	static final Logger LOG = Logger.getLogger(CoNLLRDFUpdater.class);
 	
 	private final Dataset dataset;
 
@@ -1061,89 +1059,14 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 		// updates.add(new ImmutableTriple<String, UpdateRequest, String> (updateName, UpdateFactory.create(updateQuery), updateIterationLimit));
 	}
 
-	@Override
-	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
-		final CommandLine cmd = new CoNLLRDFCommandLine(
-			"CoNLLRDFUpdater [-loglevel LEVEL] [-threads T] [-lookahead N] [-lookback N] [-custom [-model URI [GRAPH]]* [-graphsout DIR [SENT_ID ...]] [-triplesout DIR [SENT_ID ...]] -updates [UPDATE ...]]", 
-			"read TTL from stdin => update CoNLL-RDF",
-			new Option[] {
-				// Define cli options in the correct order for the help-message
-				Option.builder("loglevel").hasArg().desc("set log level to LEVEL").argName("level").build(),
-				Option.builder("threads").hasArg().desc("use T threads max\ndefault: half of available logical processor cores").type(Number.class).build(),
-				Option.builder("lookahead").hasArg().desc("cache N further sentences in lookahead graph").type(Number.class).build(),
-				Option.builder("lookback").hasArg().desc("cache N preceeding sentences in lookback graph").type(Number.class).build(),
-				new Option("prefixDeduplication", false, "Remove duplicates of TTL-Prefixes"),
-				Option.builder("custom").hasArg(false).desc("use custom update scripts").required().build(),
-				new Option("model", true, "to load additional Models into local graph"),
-				new Option("graphsout", true,
-						"output directory for the .dot graph files\nfollowed by the IDs of the sentences to be visualized\ndefault: first sentence only"),
-				new Option("triplesout", true, "same as graphsout but write N-TRIPLES for text debug instead."),
-				new Option("updates", true, "followed by SPARQL scripts paired with {iterations/u}")
-			}, LOG).parseArgs(args);
-
-		if (cmd.hasOption("threads")) {
-			setThreads(((Number) cmd.getParsedOptionValue("threads")).intValue());
-		}
-		if (cmd.hasOption("lookahead")) {
-			activateLookahead(((Number) cmd.getParsedOptionValue("lookahead")).intValue());
-		}
-		if (cmd.hasOption("lookback")) {
-			activateLookback(((Number) cmd.getParsedOptionValue("lookback")).intValue());
-		}
-		if (cmd.hasOption("prefixDeduplication")) {
-			activatePrefixDeduplication();
-		}
-		// READ GRAPHSOUT PARAMETERS
-		if (cmd.hasOption("graphsout")) {
-			List<String> graphsoutArgs = Arrays.asList(cmd.getOptionValues("graphsout"));
-			String outputDir = graphsoutArgs.remove(0);
-			List<String> outputSentences = graphsoutArgs;
-			activateGraphsOut(outputDir, outputSentences);
-		}
-		// READ TRIPLESOUT PARAMETERS
-		if (cmd.hasOption("triplesout")) {
-			List<String> triplesoutArgs = Arrays.asList(cmd.getOptionValues("triplesout"));
-			String outputDir = triplesoutArgs.remove(0);
-			List<String> outputSentences = triplesoutArgs;
-			activateTriplesOut(outputDir, outputSentences);
-		}
-
-		if (cmd.hasOption("model")) {
-			for (Option opt : cmd.getOptions()) {
-				if (opt.getOpt() == "model") { // opt.equals(model)
-					String[] model = opt.getValues();
-					try {
-						if (model.length == 1) {
-							loadGraph(new URI(model[0]), new URI(model[0]));
-						} else if (model.length == 2) {
-							loadGraph(new URI(model[0]), new URI(model[1]));
-						} else {
-							throw new ParseException("Error while loading model: Please provide one or two URIs");
-						}
-					} catch (URISyntaxException e) {
-						throw new ParseException("Error while loading model: Could not parse given arguments as URI");
-					}
-				}
-			}
-		}
-
-		if (cmd.hasOption("updates")) {
-			for (String arg : Arrays.asList(cmd.getOptionValues("updates"))) {
-				Pair<String, String> parsed = parseUpdate(arg);
-				// should be <#UPDATEFILENAMEORSTRING, #UPDATESTRING, #UPDATEITER>
-				updates.add(new ImmutableTriple<String, String, String>(parsed.getKey(), parsed.getKey(), parsed.getValue()));
-			}
-			parseUpdates(updates);
-		}
-	}
-
 	public static void main(String[] args) throws IOException {
-		final CoNLLRDFUpdater updater = new CoNLLRDFUpdater();
+		final CoNLLRDFUpdater updater;
 		try {
-			updater.configureFromCommandLine(args);
+			updater = CoNLLRDFUpdaterFactory.getUpdater(args);
 		} catch (ParseException e) {
 			LOG.error(e);
 			System.exit(1);
+			return;
 		}
 		long start = System.currentTimeMillis();
 		// READ SENTENCES from System.in

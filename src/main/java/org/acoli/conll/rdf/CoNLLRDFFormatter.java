@@ -776,7 +776,7 @@ public class CoNLLRDFFormatter extends CoNLLRDFComponent {
 		}
 	}
 
-	@Override
+	//TODO move method @Override
 	public void configureFromCommandLine(String[] argv) throws IOException, ParseException {
 		LOG.info(
 			"synopsis: CoNLLRDFFormatter [-rdf [COLS]] [-debug] [-grammar] [-semantics] [-conll COLS] [-sparqltsv SPARQL]\n"

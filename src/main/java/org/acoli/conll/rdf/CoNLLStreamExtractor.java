@@ -289,7 +289,7 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 		}
 	}
 
-	@Override
+	//TODO move method @Override
 	public void configureFromCommandLine(String[] args) throws IOException, ParseException {
 		//FIXME
 		List<Pair<String, String>> updates = new ArrayList<Pair<String, String>>();
@@ -383,12 +383,13 @@ public class CoNLLStreamExtractor extends CoNLLRDFComponent {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final CoNLLStreamExtractor extractor = new CoNLLStreamExtractor();
+		final CoNLLStreamExtractor extractor;
 		try {
-			extractor.configureFromCommandLine(args);
+			extractor = CoNLLStreamExtractorFactory.getStreamExtractor(args);
 		} catch (ParseException e) {
 			LOG.error(e);
 			System.exit(1);
+			return;
 		}
 		extractor.processSentenceStream();
 	}
