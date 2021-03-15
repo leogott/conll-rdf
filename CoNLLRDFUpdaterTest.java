@@ -7,17 +7,19 @@ import org.junit.jupiter.api.Test;
 
 public class CoNLLRDFUpdaterTest {
     @Test
+    public void numberParseTest() throws IOException, ParseException {
+        CoNLLRDFUpdater updater = CoNLLRDFUpdaterFactory.getUpdater(new String[] {"-lookahead", "5"});
+    }
+    @Test
     public void simpleTest() throws IOException, ParseException {
-        CoNLLRDFUpdater updater = new CoNLLRDFUpdater();
-        String[] a = new String[] {
+        CoNLLRDFUpdater updater = CoNLLRDFUpdaterFactory.getUpdater(new String[] {
                 "-custom",
                 "-updates",
                 "examples/sparql/remove-IGNORE.sparql",
                 "examples/sparql/analyze/UPOS-to-POSsynt.sparql",
                 "examples/sparql/analyze/EDGE-to-POSsynt.sparql",
                 "examples/sparql/analyze/consolidate-POSsynt.sparql"
-            };
-        updater.configureFromCommandLine(a);
+            });
     }
     @Test
     public void validCliArguments()
@@ -80,7 +82,7 @@ public class CoNLLRDFUpdaterTest {
             }
         };
         for (String[] a : args) {
-            new CoNLLRDFUpdater().configureFromCommandLine(a);
+            CoNLLRDFUpdaterFactory.getUpdater(a);
         }
     }
 }

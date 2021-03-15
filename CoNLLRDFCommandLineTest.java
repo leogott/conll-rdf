@@ -1,8 +1,5 @@
 package org.acoli.conll.rdf;
 
-import static org.acoli.conll.rdf.CoNLLRDFCommandLine.parseUpdate;
-import static org.acoli.conll.rdf.CoNLLRDFCommandLine.readSparqlFile;
-import static org.acoli.conll.rdf.CoNLLRDFCommandLine.readUrl;
 import static org.acoli.conll.rdf.CoNLLRDFCommandLine.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,6 +15,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -44,11 +42,11 @@ public class CoNLLRDFCommandLineTest {
     }
 
     @Test
-    public void parseUpdateTest() {
-        assertEquals(new Pair<String, String>("aaa", "1"), parseUpdate("aaa"));
-        assertEquals(new Pair<String, String>("aaa", "1"), parseUpdate("aaa{1}"));
-        assertEquals(new Pair<String, String>("aaa", "*"), parseUpdate("aaa{*}"));
-        assertEquals(new Pair<String, String>("aaa", "*"), parseUpdate("aaa{u}"));
+    public void parseUpdateTest() throws IOException, ParseException {
+        assertEquals(new ImmutablePair<String, String>("aaa", "1"), parseUpdate("aaa"));
+        assertEquals(new ImmutablePair<String, String>("aaa", "1"), parseUpdate("aaa{1}"));
+        assertEquals(new ImmutablePair<String, String>("aaa", "*"), parseUpdate("aaa{*}"));
+        assertEquals(new ImmutablePair<String, String>("aaa", "*"), parseUpdate("aaa{u}"));
     }
 
     @Test

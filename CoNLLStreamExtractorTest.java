@@ -1,7 +1,6 @@
 package org.acoli.conll.rdf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,8 +19,7 @@ class CoNLLStreamExtractorTest {
     @Test
     void simpleTest() throws ParseException, IOException
     {
-        CoNLLStreamExtractor extractor = new CoNLLStreamExtractor();
-        extractor.configureFromCommandLine(new String[] {"url", "WORD", "POS", "PARSE", "NER", "COREF", "PRED", "PRED-ARGS"});
+        CoNLLStreamExtractor extractor = CoNLLStreamExtractorFactory.getStreamExtractor(new String[] {"url", "WORD", "POS", "PARSE", "NER", "COREF", "PRED", "PRED-ARGS"});
 
         assertEquals("url", extractor.getBaseURI());
         assertEquals(new LinkedList<String>(Arrays.asList("WORD", "POS", "PARSE", "NER", "COREF", "PRED", "PRED-ARGS")),
@@ -33,9 +31,8 @@ class CoNLLStreamExtractorTest {
     @Test
     void simpleTest2() throws ParseException, IOException
     {
-        CoNLLStreamExtractor extractor = new CoNLLStreamExtractor();
+        CoNLLStreamExtractor extractor = CoNLLStreamExtractorFactory.getStreamExtractor(new String[] {"url"});
         extractor.setInputStream(new BufferedReader(new StringReader("# global.columns = WORD POS PARSE NER COREF PRED PRED-ARGS\n\n")));
-        extractor.configureFromCommandLine(new String[] {"url"});
 
         assertEquals("url", extractor.getBaseURI());
         assertEquals(new LinkedList<String>(Arrays.asList("WORD", "POS", "PARSE", "NER", "COREF", "PRED", "PRED-ARGS")),
