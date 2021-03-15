@@ -590,7 +590,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 	/**
 	 * Instruct the Updater to remove duplicates of RDF prefixes, to avoid issues with segmented data using a single prefix header.
 	 */
-	public void activateRemovePrefixDuplicates() {
+	public void activatePrefixDeduplication() {
 		this.prefixDeduplication = true;
 	}
 
@@ -1050,7 +1050,7 @@ public class CoNLLRDFUpdater extends CoNLLRDFComponent {
 			activateLookback(((Number) cmd.getParsedOptionValue("lookback")).intValue());
 		}
 		if (cmd.hasOption("prefixDeduplication")) {
-			activateRemovePrefixDuplicates();
+			activatePrefixDeduplication();
 		}
 		// READ GRAPHSOUT PARAMETERS
 		if (cmd.hasOption("graphsout")) {

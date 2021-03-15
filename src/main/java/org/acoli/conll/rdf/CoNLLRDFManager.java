@@ -229,7 +229,7 @@ public class CoNLLRDFManager {
 		if (conf.get("prefixDeduplication") != null) {
 			Boolean prefixDeduplication = conf.get("prefixDeduplication").asBoolean();
 			if (prefixDeduplication)
-				updater.activateRemovePrefixDuplicates();
+				updater.activatePrefixDeduplication();
 		}
 
 		// READ ALL UPDATES
