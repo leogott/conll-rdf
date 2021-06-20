@@ -1,0 +1,46 @@
+@prefix : <file:///C:/Users/chiarcos/Desktop/corpus/heliand/src/ddd-heliand-v1.1/#> .
+@prefix powla: <http://purl.org/powla/powla.owl#> .
+@prefix conll: <http://ufal.mff.cuni.cz/conll2009-st/task-description.html#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix terms: <http://purl.org/acoli/open-ie/> .
+@prefix x: <http://purl.org/acoli/conll-rdf/xml#> .
+@prefix nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+:s1_0 nif:nextSentence :s2_0 .
+:s2_0 a nif:Sentence .
+:s2_1 a nif:Word; conll:WORD "That"; conll:EDGE "obj"; conll:HEAD :s2_8; conll:ID "1"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "de"; conll:MISC "P=H;HD"; conll:UPOS "DET"; conll:XPOS "D^SG^A|DDS.NEUT_SG_ACC"; nif:nextWord :s2_2 .
+:s2_2 a nif:Word; conll:WORD "uuolda"; conll:EDGE "aux"; conll:HEAD :s2_8; conll:ID "2"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "willian"; conll:MISC "P=H;PD=HD"; conll:UPOS "AUX"; conll:XPOS "MDDI^SG^3|VMFIN.IND_PAST_SG_3"; nif:nextWord :s2_3 .
+:s2_3 a nif:Word; conll:WORD "thô"; conll:EDGE "obl"; conll:HEAD :s2_8; conll:ID "3"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "do"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADV"; conll:XPOS "ADV|ADV"; nif:nextWord :s2_4 .
+:s2_4 a nif:Word; conll:WORD "uuîsara"; conll:EDGE "nmod"; conll:HEAD :s2_5; conll:ID "4"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "wis"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADJ"; conll:XPOS "ADJ^G^PL|ADJS.POS_NEUT_PL_GEN_ST"; nif:nextWord :s2_5 .
+:s2_5 a nif:Word; conll:WORD "filo"; conll:EDGE "nsubj"; conll:HEAD :s2_8; conll:ID "5"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "filo"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "Q^N^PL|NA.PL_NOM"; nif:nextWord :s2_6 .
+:s2_6 a nif:Word; conll:WORD "liudo"; conll:EDGE "nmod"; conll:HEAD :s2_7; conll:ID "6"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "liudi"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^G^PL|NA.PL_GEN"; nif:nextWord :s2_7 .
+:s2_7 a nif:Word; conll:WORD "barno"; conll:EDGE "nmod"; conll:HEAD :s2_5; conll:ID "7"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "barn"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^G^PL|NA.PL_GEN"; nif:nextWord :s2_8 .
+:s2_8 a nif:Word; conll:WORD "loƀon"; conll:CLAUSE "CF_U_M"; conll:EDGE "root"; conll:HEAD "0"; conll:HID "8"; conll:ID "8"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "lovon"; conll:MISC "H;PD=HD"; conll:UPOS "VERB"; conll:XPOS "VB|VVINF"; nif:nextWord :s2_9 .
+:s2_9 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s2_8; conll:ID "9"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s2_10 .
+:s2_10 a nif:Word; conll:WORD "lêra"; conll:EDGE "obj"; conll:HEAD :s2_8; conll:ID "10"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "lera"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^A^SG|NA.SG_ACC"; nif:nextWord :s2_11 .
+:s2_11 a nif:Word; conll:WORD "Cristes"; conll:EDGE "nmod"; conll:HEAD :s2_10; conll:ID "11"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "Krist"; conll:MISC "P=H;PD=HD"; conll:UPOS "PROPN"; conll:XPOS "NPR^SG^G|NE.SG_GEN"; nif:nextWord :s2_12 .
+:s2_12 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s2_8; conll:ID "12"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s2_13 .
+:s2_13 a nif:Word; conll:WORD "hêlag"; conll:EDGE "amod"; conll:HEAD :s2_14; conll:ID "13"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "helag"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADJ"; conll:XPOS "ADJ^SG^A|ADJ.POS_NEUT_SG_ACC_0"; nif:nextWord :s2_14 .
+:s2_14 a nif:Word; conll:WORD "uuord"; conll:EDGE "obj"; conll:HEAD :s2_8; conll:ID "14"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "word"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^SG^A|NA.SG_ACC"; nif:nextWord :s2_15 .
+:s2_15 a nif:Word; conll:WORD "godas"; conll:EDGE "nmod"; conll:HEAD :s2_14; conll:ID "15"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "god"; conll:MISC "P=H;PD=HD"; conll:UPOS "PROPN"; conll:XPOS "NPR^SG^G|NE.SG_GEN"; nif:nextWord :s2_16 .
+:s2_16 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s2_8; conll:ID "16"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s2_17 .
+:s2_17 a nif:Word; conll:WORD "endi"; conll:EDGE "cc"; conll:HEAD :s2_21; conll:ID "17"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "endi"; conll:MISC "P=H;PD=HD"; conll:UPOS "CCONJ"; conll:XPOS "CONJ|KON"; nif:nextWord :s2_18 .
+:s2_18 a nif:Word; conll:WORD "mid"; conll:EDGE "case"; conll:HEAD :s2_20; conll:ID "18"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "mid"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADP"; conll:XPOS "P|APPR"; nif:nextWord :s2_19 .
+:s2_19 a nif:Word; conll:WORD "iro"; conll:EDGE "det"; conll:HEAD :s2_20; conll:ID "19"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "he"; conll:MISC "P=H;PD=HD"; conll:UPOS "DET"; conll:XPOS "PRO$^3^PL^D|DPOS.MASC_PL_GEN_3"; nif:nextWord :s2_20 .
+:s2_20 a nif:Word; conll:WORD "handon"; conll:EDGE "obl"; conll:HEAD :s2_21; conll:ID "20"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "hand"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^D^PL|NA.PL_DAT"; nif:nextWord :s2_21 .
+:s2_21 a nif:Word; conll:WORD "scrîƀan"; conll:EDGE "conj"; conll:HEAD :s2_8; conll:ID "21"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "skrivan"; conll:MISC "P=H;PD=HD"; conll:UPOS "VERB"; conll:XPOS "VB|VVINF"; nif:nextWord :s2_22 .
+:s2_22 a nif:Word; conll:WORD "berehtlîco"; conll:EDGE "advmod"; conll:HEAD :s2_21; conll:ID "22"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "berhtliko"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADV"; conll:XPOS "ADV|ADV"; nif:nextWord :s2_23 .
+:s2_23 a nif:Word; conll:WORD "an"; conll:EDGE "case"; conll:HEAD :s2_24; conll:ID "23"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "an"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADP"; conll:XPOS "P|APPR"; nif:nextWord :s2_24 .
+:s2_24 a nif:Word; conll:WORD "buok"; conll:EDGE "obl"; conll:HEAD :s2_21; conll:ID "24"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "bok"; conll:MISC "CF_U_M;P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^A^SG|NA.SG_ACC"; nif:nextWord :s2_25 .
+:s2_25 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s2_21; conll:ID "25"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s2_26 .
+:s2_26 a nif:Word; conll:WORD "huô"; conll:EDGE "advmod"; conll:HEAD :s2_31; conll:ID "26"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "hwo"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADV"; conll:XPOS "WADV|PWAV"; nif:nextWord :s2_27 .
+:s2_27 a nif:Word; conll:WORD "sia"; conll:EDGE "nsubj"; conll:HEAD :s2_31; conll:ID "27"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "he"; conll:MISC "P=H;PD=HD"; conll:UPOS "PRON"; conll:XPOS "PRO^N^3^PL|PPER.MASC_PL_NOM_3"; nif:nextWord :s2_28 .
+:s2_28 a nif:Word; conll:WORD "is"; conll:EDGE "det"; conll:HEAD :s2_29; conll:ID "28"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "he"; conll:MISC "P=H;PD=HD"; conll:UPOS "DET"; conll:XPOS "PRO$^A^SG^3|DPOS.MASC_SG_GEN_3"; nif:nextWord :s2_29 .
+:s2_29 a nif:Word; conll:WORD "gibodscip"; conll:EDGE "obj"; conll:HEAD :s2_31; conll:ID "29"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "gibodskepi"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^SG^A|NA.SG_ACC"; nif:nextWord :s2_30 .
+:s2_30 a nif:Word; conll:WORD "scoldin"; conll:EDGE "aux"; conll:HEAD :s2_31; conll:ID "30"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "skulan"; conll:MISC "P=H;PD=HD"; conll:UPOS "AUX"; conll:XPOS "MDDS^PL^3|VMFIN.SUBJ_PAST_PL_3"; nif:nextWord :s2_31 .
+:s2_31 a nif:Word; conll:WORD "frummian"; conll:CLAUSE "CF_I_O"; conll:EDGE "ccomp"; conll:HEAD :s2_21; conll:ID "31"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "frummian"; conll:MISC "H;PD=HD;CEDGE>EDGE(advcl)"; conll:UPOS "VERB"; conll:XPOS "VB|VVINF"; nif:nextWord :s2_32 .
+:s2_32 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s2_31; conll:ID "32"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P->H(97.1%);P=H;DHPOS>HPOS"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s2_33 .
+:s2_33 a nif:Word; conll:WORD "firiho"; conll:EDGE "nmod"; conll:HEAD :s2_34; conll:ID "33"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "firihos"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^G^PL|NA.PL_GEN"; nif:nextWord :s2_34 .
+:s2_34 a nif:Word; conll:WORD "barn"; conll:EDGE "nsubj"; conll:HEAD :s2_31; conll:ID "34"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "barn"; conll:MISC "CF_I_O;P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^N^PL|NA.PL_NOM"; nif:nextWord :s2_35 .
+:s2_35 a nif:Word; conll:WORD "."; conll:EDGE "punct"; conll:HEAD :s2_34; conll:ID "35"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ".|$." .
+

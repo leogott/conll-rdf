@@ -1,0 +1,30 @@
+@prefix : <file:///C:/Users/chiarcos/Desktop/corpus/heliand/src/ddd-heliand-v1.1/#> .
+@prefix powla: <http://purl.org/powla/powla.owl#> .
+@prefix conll: <http://ufal.mff.cuni.cz/conll2009-st/task-description.html#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix terms: <http://purl.org/acoli/open-ie/> .
+@prefix x: <http://purl.org/acoli/conll-rdf/xml#> .
+@prefix nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+:s14_0 nif:nextSentence :s15_0 .
+:s15_0 a nif:Sentence .
+:s15_1 a nif:Word; conll:WORD "suîðo"; conll:EDGE "advmod"; conll:HEAD :s15_3; conll:ID "1"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "swido"; conll:MISC "P->H(78.9%);P=H;DHPOS>HPOS"; conll:UPOS "ADV"; conll:XPOS "ADV|ADV"; nif:nextWord :s15_2 .
+:s15_2 a nif:Word; conll:WORD "unuuanda"; conll:EDGE "amod"; conll:HEAD :s15_3; conll:ID "2"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "unwand"; conll:MISC "P=H;PD=HD"; conll:UPOS "ADJ"; conll:XPOS "ADJ^N^PL|ADJ.POS_MASC_PL_NOM_ST"; nif:nextWord :s15_3 .
+:s15_3 a nif:Word; conll:WORD "uuini"; conll:CLAUSE "CF_I_Adv_Cns"; conll:EDGE "root"; conll:HEAD :s15_0; conll:ID "3"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "wini"; conll:MISC "CF_I_Adv_Cns;P->H(78.9%);P=H"; conll:UPOS "NOUN"; conll:XPOS "N^N^PL|NA.PL_NOM"; nif:nextWord :s15_4 .
+:s15_4 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s15_3; conll:ID "4"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s15_5 .
+:s15_5 a nif:Word; conll:WORD "than"; conll:EDGE "advmod"; conll:HEAD :s15_6; conll:ID "5"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "dan"; conll:MISC "H;HD"; conll:UPOS "SCONJ"; conll:XPOS "ADV|KOUS"; nif:nextWord :s15_6 .
+:s15_6 a nif:Word; conll:WORD "lang"; conll:EDGE "obl"; conll:HEAD :s15_9; conll:ID "6"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "lang"; conll:MISC "P=H;HD"; conll:UPOS "SCONJ"; conll:XPOS "ADV|_"; nif:nextWord :s15_7 .
+:s15_7 a nif:Word; conll:WORD "hie"; conll:EDGE "nsubj"; conll:HEAD :s15_9; conll:ID "7"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "he"; conll:MISC "P=H;PD=HD"; conll:UPOS "PRON"; conll:XPOS "PRO^SG^N^3|PPER.MASC_SG_NOM_3"; nif:nextWord :s15_8 .
+:s15_8 a nif:Word; conll:WORD "giuuald"; conll:EDGE "obj"; conll:HEAD :s15_9; conll:ID "8"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "giwald"; conll:MISC "P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "N^A^SG|NA.SG_ACC"; nif:nextWord :s15_9 .
+:s15_9 a nif:Word; conll:WORD "êhta"; conll:CLAUSE "CF_I_Adv_Temp"; conll:EDGE "advcl"; conll:HEAD :s15_3; conll:ID "9"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "egan"; conll:MISC "P->H(78.9%);P=H;CEDGE>EDGE(acl)"; conll:UPOS "VERB"; conll:XPOS "VBDI^SG^3|VVFIN.IND_PAST_SG_3"; nif:nextWord :s15_10 .
+:s15_10 a nif:Word; conll:WORD ","; conll:EDGE "punct"; conll:HEAD :s15_9; conll:ID "10"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P->H(78.9%);P=H;DHPOS>HPOS"; conll:UPOS "PUNCT"; conll:XPOS ",|$,"; nif:nextWord :s15_11 .
+:s15_11 a nif:Word; conll:WORD "Erodes"; conll:EDGE "nsubj"; conll:HEAD :s15_9; conll:ID "11"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "Erodes"; conll:MISC "H;PD=HD"; conll:UPOS "PROPN"; conll:XPOS "NPR^SG^N|NE.SG_NOM"; nif:nextWord :s15_12 .
+:s15_12 a nif:Word; conll:WORD "thes"; conll:EDGE "det"; conll:HEAD :s15_13; conll:ID "12"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "de"; conll:MISC "P=H;PD=HD"; conll:UPOS "DET"; conll:XPOS "D^G^SG|DDA.NEUT_SG_GEN"; nif:nextWord :s15_13 .
+:s15_13 a nif:Word; conll:WORD "rîkeas"; conll:EDGE "nmod"; conll:HEAD :s15_9; conll:ID "13"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "riki"; conll:MISC "H;HD"; conll:UPOS "NOUN"; conll:XPOS "N^G^SG|NA.SG_GEN"; nif:nextWord :s15_14 .
+:s15_14 a nif:Word; conll:WORD "endi"; conll:EDGE "cc"; conll:HEAD :s15_16; conll:ID "14"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "endi"; conll:MISC "P=H;PD=HD"; conll:UPOS "CCONJ"; conll:XPOS "CONJ|KON"; nif:nextWord :s15_15 .
+:s15_15 a nif:Word; conll:WORD "râdburdeon"; conll:EDGE "obl"; conll:HEAD :s15_16; conll:ID "15"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "radburd"; conll:MISC "P=H;HD"; conll:UPOS "NOUN"; conll:XPOS "N^D^PL|NA.PL_DAT"; nif:nextWord :s15_16 .
+:s15_16 a nif:Word; conll:WORD "held"; conll:EDGE "conj"; conll:HEAD :s15_9; conll:ID "16"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "haldan"; conll:MISC "P=H;PD=HD"; conll:UPOS "VERB"; conll:XPOS "GE+VBDI^3^SG|VVFIN.IND_PAST_SG_3"; nif:nextWord :s15_17 .
+:s15_17 a nif:Word; conll:WORD "Iudeo"; conll:EDGE "nmod"; conll:HEAD :s15_18; conll:ID "17"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "Judeo"; conll:MISC "CF_I_Adv_Temp;P=H;PD=HD"; conll:UPOS "NOUN"; conll:XPOS "NPR^PL^G|NA.PL_ACC"; nif:nextWord :s15_18 .
+:s15_18 a nif:Word; conll:WORD "liudi"; conll:CLAUSE "CF_I_Adv_Temp"; conll:EDGE "advcl"; conll:HEAD :s15_16; conll:ID "18"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA "liudi"; conll:MISC "CF_I_Adv_Temp;P=H;PD=HD;CEDGE>EDGE(obj)"; conll:UPOS "NOUN"; conll:XPOS "N^PL^A|_"; nif:nextWord :s15_19 .
+:s15_19 a nif:Word; conll:WORD "."; conll:EDGE "punct"; conll:HEAD :s15_3; conll:ID "19"^^<http://www.w3.org/2001/XMLSchema#int>; conll:LEMMA ","; conll:MISC "P=H;PD=HD"; conll:UPOS "PUNCT"; conll:XPOS ".|$." .
+
