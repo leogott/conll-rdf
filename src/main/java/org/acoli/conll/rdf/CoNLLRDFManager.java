@@ -12,7 +12,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.zip.GZIPInputStream;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
@@ -27,23 +27,15 @@ import org.apache.log4j.Logger;
 public class  CoNLLRDFManager {
 	static Logger LOG = Logger.getLogger(CoNLLRDFManager.class);
 
-	static Map<String,Function<ObjectNode,CoNLLRDFComponent>> classFactoryMap;
+	static Map<String,Supplier<? extends CoNLLRDFComponentFactory>> classFactoryMap;
 	static {
 		classFactoryMap = new HashMap<>();
-		classFactoryMap.put(CoNLLStreamExtractor.class.getSimpleName(), (pipelineElement) -> {
-			return new CoNLLStreamExtractorFactory().buildFromJsonConf(pipelineElement);
-		});
-		classFactoryMap.put(CoNLLRDFUpdater.class.getSimpleName(), (pipelineElement) -> {
-			return new CoNLLRDFUpdaterFactory().buildFromJsonConf(pipelineElement);
-		});
-		classFactoryMap.put(CoNLLRDFFormatter.class.getSimpleName(), (pipelineElement) -> {
-			ObjectNode conf = (ObjectNode) pipelineElement;
+		classFactoryMap.put(CoNLLStreamExtractor.class.getSimpleName(), () -> new CoNLLStreamExtractorFactory());
+		classFactoryMap.put(CoNLLRDFUpdater.class.getSimpleName(), () -> new CoNLLRDFUpdaterFactory());
+		classFactoryMap.put(CoNLLRDFFormatter.class.getSimpleName(), () -> new CoNLLRDFFormatterFactory());
+			// ObjectNode conf = (ObjectNode) pipelineElement;
 			// conf.set("output", config.get("output")); FIXME
-			return new CoNLLRDFFormatterFactory().buildFromJsonConfig(conf);
-		});
-		classFactoryMap.put(SimpleLineBreakSplitter.class.getSimpleName(), (pipelineElement) -> {
-			return new SimpleLineBreakSplitter();
-		});
+		classFactoryMap.put(SimpleLineBreakSplitter.class.getSimpleName(), () -> new SimpleLineBreakSplitterFactory());
 	}
 
 	private ObjectNode config;
@@ -145,7 +137,7 @@ public class  CoNLLRDFManager {
 				throw new ParseException( "Invalid JSON pipeline. Unknown class: " + className);
 			}
 
-			CoNLLRDFComponent component = classFactoryMap.get(className).apply((ObjectNode) pipelineElement);
+			CoNLLRDFComponent component = classFactoryMap.get(className).get().buildFromJsonConfig((ObjectNode) pipelineElement);
 			componentStack.add(component);
 
 			// Define Pipeline I/O
