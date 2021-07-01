@@ -120,13 +120,15 @@ public class CoNLLRDFManager {
 			// Create CoNLLRDFComponents (StreamExtractor, Updater, Formatter ...)
 			CoNLLRDFComponent component;
 			if (pipelineElement.get("class").asText().equals(CoNLLStreamExtractor.class.getSimpleName())) {
-				component = buildStreamExtractor((ObjectNode) pipelineElement);
+				component = new CoNLLStreamExtractorFactory().buildFromJsonConf((ObjectNode) pipelineElement);
 			} else if (pipelineElement.get("class").asText().equals(CoNLLRDFUpdater.class.getSimpleName())) {
-				component = buildUpdater((ObjectNode) pipelineElement);
+				component = new CoNLLRDFUpdaterFactory().buildFromJsonConf((ObjectNode) pipelineElement);
 			} else if (pipelineElement.get("class").asText().equals(CoNLLRDFFormatter.class.getSimpleName())) {
-				component = buildFormatter((ObjectNode) pipelineElement);
+				ObjectNode conf = (ObjectNode) pipelineElement;
+				conf.set("output", config.get("output"));
+				component = new CoNLLRDFFormatterFactory().buildFromJsonConfig(conf);
 			} else if (pipelineElement.get("class").asText().equals(SimpleLineBreakSplitter.class.getSimpleName())) {
-				component = buildSimpleLineBreakSplitter((ObjectNode) pipelineElement);
+				component = new SimpleLineBreakSplitter();
 			} else {
 				throw new IOException("File is no valid JSON config.");
 			}
@@ -145,24 +147,6 @@ public class CoNLLRDFManager {
 				nextInput = new BufferedReader(new InputStreamReader(new PipedInputStream(compOutput)));
 			}
 		}
-	}
-
-
-	private CoNLLRDFComponent buildStreamExtractor(ObjectNode conf) throws IOException {
-		return new CoNLLStreamExtractorFactory().buildFromJsonConf(conf);
-	}
-
-	private CoNLLRDFComponent buildUpdater(ObjectNode conf) throws IOException, ParseException {
-		return new CoNLLRDFUpdaterFactory().buildFromJsonConf(conf);
-	}
-
-	private CoNLLRDFComponent buildFormatter(ObjectNode conf) throws IOException {
-		conf.set("output", config.get("output"));
-		return new CoNLLRDFFormatterFactory().buildFromJsonConfig(conf);
-	}
-
-	private CoNLLRDFComponent buildSimpleLineBreakSplitter(ObjectNode conf) {
-		return new SimpleLineBreakSplitter();
 	}
 
 	public void start() {
