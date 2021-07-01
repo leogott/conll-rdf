@@ -17,7 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.log4j.Logger;
 
-public class CoNLLRDFUpdaterFactory {
+public class CoNLLRDFUpdaterFactory implements CoNLLRDFComponentFactory {
 	static Logger LOG = Logger.getLogger(CoNLLRDFUpdaterFactory.class);
 
 	public CoNLLRDFUpdater buildFromCLI(String[] args) throws IOException, ParseException {
@@ -106,7 +106,7 @@ public class CoNLLRDFUpdaterFactory {
 		return updater;
 	}
 
-	public CoNLLRDFUpdater buildFromJsonConf(ObjectNode conf) throws IOException, ParseException {
+	public CoNLLRDFUpdater buildFromJsonConfig(ObjectNode conf) throws IOException, ParseException {
 		// READ THREAD PARAMETERS
 		int threads = 0;
 		if (conf.get("threads") != null)

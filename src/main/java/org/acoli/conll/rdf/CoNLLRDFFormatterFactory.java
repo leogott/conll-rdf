@@ -24,7 +24,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
-public class CoNLLRDFFormatterFactory {
+public class CoNLLRDFFormatterFactory implements CoNLLRDFComponentFactory {
 	static Logger LOG = Logger.getLogger(CoNLLRDFFormatterFactory.class);
 
 	public CoNLLRDFFormatter buildFromCLI(String[] args) throws IOException, ParseException {

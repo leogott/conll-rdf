@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -13,7 +14,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.*;
 import org.apache.log4j.Logger;
 
-public class CoNLLStreamExtractorFactory {
+public class CoNLLStreamExtractorFactory implements CoNLLRDFComponentFactory {
 	static Logger LOG = Logger.getLogger(CoNLLStreamExtractorFactory.class);
 	public CoNLLStreamExtractor buildFromCLI(String[] args) throws IOException, ParseException {
 		CoNLLStreamExtractor extractor = new CoNLLStreamExtractor();
@@ -70,7 +71,7 @@ public class CoNLLStreamExtractorFactory {
 		return extractor;
 	}
 
-	public CoNLLStreamExtractor buildFromJsonConf (JsonNode conf) {
+	public CoNLLStreamExtractor buildFromJsonConfig (ObjectNode conf) {
 		CoNLLStreamExtractor ex = new CoNLLStreamExtractor();
 		ex.setBaseURI(conf.get("baseURI").asText());
 		ex.getColumns().clear();
