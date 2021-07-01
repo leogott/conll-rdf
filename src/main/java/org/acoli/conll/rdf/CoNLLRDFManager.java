@@ -10,6 +10,9 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
@@ -21,8 +24,27 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
-public class CoNLLRDFManager {
+public class  CoNLLRDFManager {
 	static Logger LOG = Logger.getLogger(CoNLLRDFManager.class);
+
+	static Map<String,Function<ObjectNode,CoNLLRDFComponent>> classFactoryMap;
+	static {
+		classFactoryMap = new HashMap<>();
+		classFactoryMap.put(CoNLLStreamExtractor.class.getSimpleName(), (pipelineElement) -> {
+			return new CoNLLStreamExtractorFactory().buildFromJsonConf(pipelineElement);
+		});
+		classFactoryMap.put(CoNLLRDFUpdater.class.getSimpleName(), (pipelineElement) -> {
+			return new CoNLLRDFUpdaterFactory().buildFromJsonConf(pipelineElement);
+		});
+		classFactoryMap.put(CoNLLRDFFormatter.class.getSimpleName(), (pipelineElement) -> {
+			ObjectNode conf = (ObjectNode) pipelineElement;
+			// conf.set("output", config.get("output")); FIXME
+			return new CoNLLRDFFormatterFactory().buildFromJsonConfig(conf);
+		});
+		classFactoryMap.put(SimpleLineBreakSplitter.class.getSimpleName(), (pipelineElement) -> {
+			return new SimpleLineBreakSplitter();
+		});
+	}
 
 	private ObjectNode config;
 	private ArrayList<CoNLLRDFComponent> componentStack;
@@ -118,20 +140,12 @@ public class CoNLLRDFManager {
 			}
 
 			// Create CoNLLRDFComponents (StreamExtractor, Updater, Formatter ...)
-			CoNLLRDFComponent component;
-			if (pipelineElement.get("class").asText().equals(CoNLLStreamExtractor.class.getSimpleName())) {
-				component = new CoNLLStreamExtractorFactory().buildFromJsonConf((ObjectNode) pipelineElement);
-			} else if (pipelineElement.get("class").asText().equals(CoNLLRDFUpdater.class.getSimpleName())) {
-				component = new CoNLLRDFUpdaterFactory().buildFromJsonConf((ObjectNode) pipelineElement);
-			} else if (pipelineElement.get("class").asText().equals(CoNLLRDFFormatter.class.getSimpleName())) {
-				ObjectNode conf = (ObjectNode) pipelineElement;
-				conf.set("output", config.get("output"));
-				component = new CoNLLRDFFormatterFactory().buildFromJsonConfig(conf);
-			} else if (pipelineElement.get("class").asText().equals(SimpleLineBreakSplitter.class.getSimpleName())) {
-				component = new SimpleLineBreakSplitter();
-			} else {
-				throw new IOException("File is no valid JSON config.");
+			String className = pipelineElement.get("class").asText();
+			if (!classFactoryMap.containsKey(className)) {
+				throw new ParseException( "Invalid JSON pipeline. Unknown class: " + className);
 			}
+
+			CoNLLRDFComponent component = classFactoryMap.get(className).apply((ObjectNode) pipelineElement);
 			componentStack.add(component);
 
 			// Define Pipeline I/O
